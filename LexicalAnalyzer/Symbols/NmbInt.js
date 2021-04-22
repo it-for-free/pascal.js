@@ -2,9 +2,8 @@ const SymbolBase = require('./SymbolBase.js');
 
 module.exports = class NmbInt extends SymbolBase
 {
-    constructor(textPosition, symbolCode, value)
+    constructor(textPosition, symbolCode, stringValue)
     {
-        super.constructor(textPosition, symbolCode)
-        this.value = value;
+        super.constructor(textPosition, symbolCode, stringValue, Number.parseInt(stringValue));
     }
 }

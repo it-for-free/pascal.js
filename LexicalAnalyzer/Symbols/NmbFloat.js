@@ -2,9 +2,8 @@ const SymbolBase = require('./SymbolBase.js');
 
 module.exports = class NmbFloat extends SymbolBase
 {
-    constructor(textPosition, symbolCode, value)
+    constructor(textPosition, symbolCode, stringValue)
     {
-        super.constructor(textPosition, symbolCode)
-        this.value = value;
+        super.constructor(textPosition, symbolCode, stringValue, parseFloat(stringValue));
     }
 }

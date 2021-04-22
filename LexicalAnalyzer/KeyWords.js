@@ -1,4 +1,4 @@
-const SymbolsCodes = require('./KeyWords.js');
+const SymbolsCodes = require('./SymbolsCodes.js');
 
 module.exports = class KeyWords
 {
@@ -47,6 +47,6 @@ module.exports = class KeyWords
     {
         return  this.keyWordsCodes.has(keyWord) ?
                 this.keyWordsCodes.get(keyWord) :
-                null;
+                SymbolsCodes.ident;
     }
 }
