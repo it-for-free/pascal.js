@@ -11,7 +11,7 @@ module.exports = class ConsoleOutput
     listLine(line, number)
     {
         var output = this.getLinePrefix(number + 1) + line;
-        process.stdout.write(output);
+        console.log(output.replace(/[\n\r]/g, ''));
     }
 
     listErrors(errors)
@@ -22,11 +22,6 @@ module.exports = class ConsoleOutput
     getLinePrefix(lineNumber)
     {
         return '  ' + ( lineNumber < 10 ? '0' : '' ) + lineNumber + '    ';
-    }
-
-    getErrorPrefix(errorNumber, lineNumber)
-    {
-        return '**' + ( lineNumber < 10 ? '0' : '' ) + lineNumber + '    ';
     }
 
     getErrorText(error, errorNumber)
@@ -47,9 +42,9 @@ module.exports = class ConsoleOutput
 
     listError(error)
     {
-        process.stdout.write(this.getErrorText(error, ++this.errorsCounter) + '\n');
+        console.log(this.getErrorText(error, ++this.errorsCounter));
     }
-    
+
     getNumberOfDigits(number)
     {
         return (number < 10 ? 1 : Math.floor(Math.log10(number))) + 1;

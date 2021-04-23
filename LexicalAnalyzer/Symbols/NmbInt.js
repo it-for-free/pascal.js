@@ -4,6 +4,6 @@ module.exports = class NmbInt extends SymbolBase
 {
     constructor(textPosition, symbolCode, stringValue)
     {
-        super.constructor(textPosition, symbolCode, stringValue, Number.parseInt(stringValue));
+        super(textPosition, symbolCode, stringValue, Number.parseInt(stringValue));
     }
 }

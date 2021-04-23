@@ -4,6 +4,6 @@ module.exports = class OneSymbol extends SymbolBase
 {
     constructor(textPosition, symbolCode, stringValue)
     {
-        super.constructor(textPosition, symbolCode, stringValue, stringValue);
+        super(textPosition, symbolCode, stringValue, stringValue);
     }
 }

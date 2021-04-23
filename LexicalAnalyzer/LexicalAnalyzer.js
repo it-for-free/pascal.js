@@ -3,6 +3,7 @@ const KeyWords = require('./KeyWords.js');
 const Symbol = require('./Symbols/Symbol.js');
 const NmbFloat = require('./Symbols/NmbFloat.js');
 const NmbInt = require('./Symbols/NmbInt.js');
+const OneSymbol = require('./Symbols/OneSymbol.js');
 
 module.exports = class LexicalAnalyzer
 {
@@ -18,7 +19,7 @@ module.exports = class LexicalAnalyzer
         this.MAX_IDENT = 64;
         this.keyWords = new KeyWords();
     }
-    
+
     nextSym()
     {
         if (this.char === null) {
@@ -33,6 +34,10 @@ module.exports = class LexicalAnalyzer
 
     scanSymbol()
     {
+        if (this.char === null) {
+            return null;
+        }
+            
         this.currentWord = '';
         
         // <letter>
@@ -83,9 +88,9 @@ module.exports = class LexicalAnalyzer
             }
 
         } else {
+            this.currentWord += this.char;
             switch (this.char) {
                 case ':':
-                    this.currentWord += this.char;
                     this.char = this.fileIO.nextCh();
                     if (this.char === '=') {
                         this.currentWord += this.char;
@@ -95,7 +100,6 @@ module.exports = class LexicalAnalyzer
                         return this.getSymbol(SymbolsCodes.colon);
                     }
                 case '<':
-                    this.currentWord += this.char;
                     this.char = this.fileIO.nextCh();
                     switch (this.char) {
                         case '=':
@@ -110,7 +114,6 @@ module.exports = class LexicalAnalyzer
                             return this.getSymbol(SymbolsCodes.later);
                     }
                 case '>':
-                    this.currentWord += this.char;
                     this.char = this.fileIO.nextCh();
                     if (this.char === '=') {
                         this.currentWord += this.char;
@@ -120,55 +123,102 @@ module.exports = class LexicalAnalyzer
                         return this.getSymbol(SymbolsCodes.greater);
                     }
 
+                case '-':
+                    this.char = this.fileIO.nextCh();
+                    return this.getSymbol(SymbolsCodes.minus);
+
+                case '+':
+                    this.char = this.fileIO.nextCh();
+                    return this.getSymbol(SymbolsCodes.plus);
+
                 case '*':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.star);
 
                 case '/':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.slash);
 
                 case '=':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.equal);
 
                 case ',':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.comma);
 
                 case ';':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.semicolon);
 
                 case '^':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.arrow);
 
                 case '(':
+                    this.char = this.fileIO.nextCh();
+
+                    var previousChar = null;
+                    var currentChar = null;
+                    // skip comments
+                    if (this.char === '*') {
+                        do {
+                            previousChar = currentChar;
+                            currentChar = this.fileIO.nextCh();
+                        } while (
+                            !(previousChar === '*' &&
+                            currentChar === ')')
+                        )
+                        
+                        this.char = this.fileIO.nextCh();
+                        
+                    }
+                    
                     return this.getSymbol(SymbolsCodes.leftPar);
 
                 case ')':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.rightPar);
 
                 case '[':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.lBracket);
 
                 case ']':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.rBracket);
 
                 case '{':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.flPar);
 
                 case '}':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.frPar);
 
                 case '<':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.later);
 
                 case '>':
+                    this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.greater);
 
+                case "'":
+                    do {
+                        this.char = this.fileIO.nextCh();
+                        this.currentWord += this.char;
+                    } while (this.char !== "'")
+
+                    this.char = this.fileIO.nextCh();
+                    return new OneSymbol(this.token, SymbolsCodes.charC, this.currentWord);
             }
         }
     }
 
-    getSymbol()
+    getSymbol(symbolCode)
     {
-        return this.getSymbol(SymbolsCodes.greater, this.currentWord);
+        return new Symbol(this.token, symbolCode, this.currentWord);
     }
 
     skipWhiteSpaces()

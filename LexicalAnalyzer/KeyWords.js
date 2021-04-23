@@ -27,6 +27,7 @@ module.exports = class KeyWords
             ['goto', SymbolsCodes.gotoSy],
             ['type', SymbolsCodes.typeSy],
             ['with', SymbolsCodes.withSy],
+            ['real', SymbolsCodes.realSy],
             ['begin', SymbolsCodes.beginSy],
             ['while', SymbolsCodes.whileSy],
             ['array', SymbolsCodes.arraySy],
@@ -38,6 +39,7 @@ module.exports = class KeyWords
             ['record', SymbolsCodes.recordSy],
             ['repeat', SymbolsCodes.repeatSy],
             ['program', SymbolsCodes.programSy],
+            ['integer', SymbolsCodes.integerSy],
             ['function', SymbolsCodes.functionSy],
             ['procedure', SymbolsCodes.procedureSy]
         ]);
@@ -45,8 +47,9 @@ module.exports = class KeyWords
 
     getSymbolCodeByKeyWord(keyWord)
     {
-        return  this.keyWordsCodes.has(keyWord) ?
-                this.keyWordsCodes.get(keyWord) :
+        let lowerCase = keyWord.toLowerCase();
+        return  this.keyWordsCodes.has(lowerCase) ?
+                this.keyWordsCodes.get(lowerCase) :
                 SymbolsCodes.ident;
     }
 }

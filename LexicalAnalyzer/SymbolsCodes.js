@@ -51,6 +51,7 @@ module.exports = {
     nilSy           :113,
     setSy           :114,
     typeSy          :120,
+    realSy          :121,
     beginSy         :122,
     whileSy         :123,
     arraySy         :124,
@@ -60,7 +61,8 @@ module.exports = {
     packedSy        :129,
     recordSy        :130,
     repeatSy        :131,
-    programSy       :132,
-    functionSy      :133,
-    procedureSy     :134
+    integerSy       :132,
+    programSy       :133,
+    functionSy      :134,
+    procedureSy     :135
 }

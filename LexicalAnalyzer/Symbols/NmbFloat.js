@@ -4,6 +4,6 @@ module.exports = class NmbFloat extends SymbolBase
 {
     constructor(textPosition, symbolCode, stringValue)
     {
-        super.constructor(textPosition, symbolCode, stringValue, parseFloat(stringValue));
+        super(textPosition, symbolCode, stringValue, parseFloat(stringValue));
     }
 }

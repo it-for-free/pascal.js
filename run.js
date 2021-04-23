@@ -3,21 +3,13 @@ const ConsoleOutput = require('./IO/ConsoleOutput.js');
 const LexicalAnalyzer = require('./LexicalAnalyzer/LexicalAnalyzer.js');
 const ErrorsDescription = require('./Errors/ErrorsDescription.js');
 
-fileIO = new FileIO('example.pas', new ConsoleOutput( new ErrorsDescription() ));
 
+var fileIO = new FileIO('example.pas', new ConsoleOutput( new ErrorsDescription() ));
+var lexicalAnalyzer = new LexicalAnalyzer(fileIO);
 
+var symbol = null;
 
 for (i= 1; i<= 200; i++) {
-    char = fileIO.nextCh();
-//    process.stdout.write('' + char);
+    symbol = lexicalAnalyzer.nextSym();
+    console.log(symbol);
 }
-
-
-//analyze = new LexicalAnalyzer();
-
-
-var re = /[a-z]/i;
-//var text = 'o12_asf_aa';
-var text = 'A';
-var match = re.exec(text);
-console.log(match);
