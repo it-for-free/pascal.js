@@ -7,11 +7,11 @@ module.exports = class ErrorsDescription
         this.errorCodeMapper = new Map([
             [1, 'An error in primitive type'],
             [2, 'Name expected'],
-            [3, 'Keyword \'program\' expected'],
+            [ErrorsCodes.inadmissibleSymbol, 'Inadmissible Symbol'],
             [ErrorsCodes.forbiddenCharacter, 'Forbidden character'],
         ]);
     }
-    
+
     getErrorTextByCode(errorCode)
     {
         return  this.errorCodeMapper.has(errorCode) ?
