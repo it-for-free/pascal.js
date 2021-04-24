@@ -1,10 +1,7 @@
-const ErrorsDescription = require('../Errors/ErrorsDescription.js');
-
 module.exports = class ConsoleOutput
 {
-    constructor(errorsDescription)
+    constructor()
     {
-        this.errorsDescription = errorsDescription;
         this.errorsCounter = 0;
     }
 
@@ -36,8 +33,8 @@ module.exports = class ConsoleOutput
         var starsNumber = lineNumberDigits + 4;
         
         return  '**' + ( errorNumber < 10 ? '0' : '' ) + '0'.repeat(zeroesNumber) + errorNumber + '*'.repeat(gapsNumber) +
-                ' '.repeat(error.textPosition.charNumber + 2) + '^ Error Code ' + error.errorCode + '\n' +
-                '*'.repeat(starsNumber) + '  ' + this.errorsDescription.getErrorTextByCode(error.errorCode);
+                ' '.repeat(error.textPosition.charNumber + 1) + '^ Error Code ' + error.errorCode + '\n' +
+                '*'.repeat(starsNumber) + '  ' + error.errorText;
     }
 
     listError(error)

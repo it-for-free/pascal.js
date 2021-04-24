@@ -4,13 +4,15 @@ const Symbol = require('./Symbols/Symbol.js');
 const NmbFloat = require('./Symbols/NmbFloat.js');
 const NmbInt = require('./Symbols/NmbInt.js');
 const OneSymbol = require('./Symbols/OneSymbol.js');
+const ErrorsCodes = require('../Errors/ErrorsCodes.js');
 
 module.exports = class LexicalAnalyzer
 {
     constructor(fileIO)
     {
         this.fileIO = fileIO;
-
+        this.errorsCodes = ErrorsCodes;
+        
         this.token = null;
         this.currentWord = null;
         this.char = ' ';
@@ -214,6 +216,10 @@ module.exports = class LexicalAnalyzer
                     return new OneSymbol(this.token, SymbolsCodes.charC, this.currentWord);
             }
         }
+        
+        this.addForbiddenCharacterError(this.char);
+        this.char = this.fileIO.nextCh();
+        return null;
     }
 
     getSymbol(symbolCode)
@@ -228,5 +234,10 @@ module.exports = class LexicalAnalyzer
         while (ws.exec(this.char) !== null) {
             this.char = this.fileIO.nextCh();
         }
+    }
+
+    addForbiddenCharacterError(character)
+    {
+        this.fileIO.addError(this.errorsCodes.forbiddenCharacter, ` '${character}'`, this.token)
     }
 }

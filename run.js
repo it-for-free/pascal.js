@@ -1,10 +1,9 @@
 const FileIO = require('./IO/FileIO.js');
 const ConsoleOutput = require('./IO/ConsoleOutput.js');
 const LexicalAnalyzer = require('./LexicalAnalyzer/LexicalAnalyzer.js');
-const ErrorsDescription = require('./Errors/ErrorsDescription.js');
 
 
-var fileIO = new FileIO('example.pas', new ConsoleOutput( new ErrorsDescription() ));
+var fileIO = new FileIO('example.pas', new ConsoleOutput());
 var lexicalAnalyzer = new LexicalAnalyzer(fileIO);
 
 var symbol = null;

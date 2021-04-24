@@ -1,4 +1,5 @@
 const TextPosition = require('./TextPosition.js');
+const ErrorsDescription = require('../Errors/ErrorsDescription.js');
 const Error = require('./Error.js');
 const fs = require('fs');
 
@@ -6,6 +7,8 @@ module.exports = class FileIO
 {
     constructor(fileName, printer)
     {
+        this.errorsDescription = new ErrorsDescription();
+
         this.positionNow = new TextPosition();
         this.printer = printer;
         this.currentLine;
@@ -15,7 +18,6 @@ module.exports = class FileIO
         this.linePointer = 0;
         this.currentLine;
         this.endOfFile = false;
-       
         this.readNextLine();
     }
 
@@ -55,8 +57,11 @@ module.exports = class FileIO
        this.endOfFile = this.linePointer === this.lines.length;
     }
 
-    addError(errorCode)
+    addError(errorCode, errorText = null)
     {
-        this.currentLineErrors.push(new Error(errorCode, this.getCurrentPosition()));
+        let message = this.errorsDescription.getErrorTextByCode(errorCode) +
+                (errorText === null ? '' : ('. ' + errorText));
+
+        this.currentLineErrors.push(new Error(errorCode, message, this.getCurrentPosition()));
     }
 }

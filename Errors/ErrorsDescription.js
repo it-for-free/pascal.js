@@ -1,3 +1,5 @@
+const ErrorsCodes = require('./ErrorsCodes.js');
+
 module.exports = class ErrorsDescription
 {
     constructor()
@@ -5,7 +7,8 @@ module.exports = class ErrorsDescription
         this.errorCodeMapper = new Map([
             [1, 'An error in primitive type'],
             [2, 'Name expected'],
-            [3, 'Keyword \'program\' expected']
+            [3, 'Keyword \'program\' expected'],
+            [ErrorsCodes.forbiddenCharacter, 'Forbidden character'],
         ]);
     }
     

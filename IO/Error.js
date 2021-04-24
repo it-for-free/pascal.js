@@ -1,8 +1,9 @@
 module.exports = class Error
 {
-    constructor(errorCode, textPosition)
+    constructor(errorCode, errorText, textPosition)
     {
         this.errorCode = errorCode;
+        this.errorText = errorText;
         this.textPosition = textPosition;
     }
 }
