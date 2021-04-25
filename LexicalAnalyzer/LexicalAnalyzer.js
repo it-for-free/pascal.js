@@ -12,7 +12,7 @@ module.exports = class LexicalAnalyzer
     {
         this.fileIO = fileIO;
         this.errorsCodes = ErrorsCodes;
-        
+
         this.token = null;
         this.currentWord = null;
         this.char = ' ';
@@ -39,9 +39,9 @@ module.exports = class LexicalAnalyzer
         if (this.char === null) {
             return null;
         }
-            
+
         this.currentWord = '';
-        
+
         // <letter>
         if (/[a-z]/i.exec(this.char) !== null) {
 
@@ -54,7 +54,7 @@ module.exports = class LexicalAnalyzer
 
         // <digit>
         } else if (/[\d.]/.exec(this.char) !== null) {
-            
+
             this.currentWord += this.char;
             this.char = this.fileIO.nextCh();
 
@@ -63,9 +63,9 @@ module.exports = class LexicalAnalyzer
                 this.currentWord += this.char;
                 this.char = this.fileIO.nextCh();
                 return this.getSymbol(SymbolsCodes.twoPoints);
-                        
+
             } else if (this.currentWord === '.' && /\d/.exec(this.char) === null) {
-                
+
                 this.symbol = SymbolsCodes.point;
                 return this.getSymbol(this.symbol);
             } else {
@@ -161,7 +161,7 @@ module.exports = class LexicalAnalyzer
                     this.char = this.fileIO.nextCh();
 
                     var previousChar = null;
-                    var currentChar = null;
+                    var currentChar = this.currentWord;
                     // skip comments
                     if (this.char === '*') {
                         do {
@@ -171,12 +171,13 @@ module.exports = class LexicalAnalyzer
                             !(previousChar === '*' &&
                             currentChar === ')')
                         )
-                        
+
                         this.char = this.fileIO.nextCh();
-                        
+                        this.skipWhiteSpaces();
+                        return this.scanSymbol();
+                    } else {
+                        return this.getSymbol(SymbolsCodes.leftPar);
                     }
-                    
-                    return this.getSymbol(SymbolsCodes.leftPar);
 
                 case ')':
                     this.char = this.fileIO.nextCh();
@@ -216,7 +217,7 @@ module.exports = class LexicalAnalyzer
                     return new OneSymbol(this.token, SymbolsCodes.charC, this.currentWord);
             }
         }
-        
+
         this.addForbiddenCharacterError(this.char);
         this.char = this.fileIO.nextCh();
         return null;

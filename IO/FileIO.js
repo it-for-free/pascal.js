@@ -44,7 +44,7 @@ module.exports = class FileIO
                 this.positionNow.lineNumber++;
                 this.positionNow.charNumber = 0;
             }
-            
+
             return this.currentLine[this.positionNow.charNumber++];
         }
     }
@@ -57,11 +57,11 @@ module.exports = class FileIO
        this.endOfFile = this.linePointer === this.lines.length;
     }
 
-    addError(errorCode, errorText = null)
+    addError(errorCode, errorText = null, textPosition = null)
     {
         let message = this.errorsDescription.getErrorTextByCode(errorCode) +
                 (errorText === null ? '' : ('. ' + errorText));
-
-        this.currentLineErrors.push(new Error(errorCode, message, this.getCurrentPosition()));
+        let currentPosition = textPosition === null ? this.getCurrentPosition() : textPosition;
+        this.currentLineErrors.push(new Error(errorCode, message, currentPosition));
     }
 }

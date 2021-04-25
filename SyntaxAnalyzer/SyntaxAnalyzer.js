@@ -9,6 +9,8 @@ module.exports = class SyntaxAnalyzer
         this.lexicalAnalyzer = lexicalAnalyzer;
         this.symbolsDescription = new SymbolsDescription();
         this.symbol = null;
+        this.tree = null;
+        this.errorDetected = false;
     }
 
     nextSym()
@@ -19,21 +21,28 @@ module.exports = class SyntaxAnalyzer
     anotherSymbolExpected(expectedSymbol)
     {
         let description = this.symbolsDescription.getSymbolTextByCode(expectedSymbol);
-        errorText = `. '${description}' expected but '${this.symbol.stringValue}' found.`;
-        this.lexicalAnalyzer.fileIO.addError(ErrorsCodes.inadmissibleSymbol, errorText);
+        let errorText = `'${description}' expected but '${this.symbol.stringValue}' found.`;
+        this.lexicalAnalyzer.fileIO.addError(ErrorsCodes.inadmissibleSymbol, errorText, this.symbol.textPosition);
     }
 
-    accept(expectedSymbol)
+    accept(expectedSymbolCode)
     {
-        if (this.symbol === expectedSymbol) {
+        if (this.symbol === null) {
+            return null;
+        }
+
+        if (this.symbol.symbolCode === expectedSymbolCode) {
             this.nextSym();
         } else {
-            this.anotherSymbolExpected(expectedSymbol);
+            this.errorDetected = true;
+            this.anotherSymbolExpected(expectedSymbolCode);
+            this.goToEnd();
         }
     }
 
     analyze()
     {
+        this.tree = {};
         this.nextSym();
         this.programme();
     }
@@ -74,7 +83,41 @@ module.exports = class SyntaxAnalyzer
 
     varPart()
     {
+        if (this.symbol.symbolCode === SymbolsCodes.varSy) {
+            this.nextSym();
+            do {
+                this.varDeclaration();
+                this.accept(SymbolsCodes.semicolon);
+            } while (!this.errorDetected &&
+                this.symbol.symbolCode === SymbolsCodes.ident)
 
+
+        }
+    }
+
+    varDeclaration()
+    {
+        this.accept(SymbolsCodes.ident);
+        while (!this.errorDetected &&
+                this.symbol.symbolCode === SymbolsCodes.comma) {
+            this.nextSym();
+            this.accept(SymbolsCodes.ident);
+        }
+
+        this.accept(SymbolsCodes.colon);
+        this.type();
+    }
+
+    type()
+    {
+        if (this.symbol.symbolCode === SymbolsCodes.integerSy ||
+            this.symbol.symbolCode === SymbolsCodes.realSy ||
+            this.symbol.symbolCode === SymbolsCodes.charSy) {
+
+            this.nextSym();
+        } else {
+            this.accept(SymbolsCodes.ident);
+        }
     }
 
     procFuncPart()
@@ -84,6 +127,14 @@ module.exports = class SyntaxAnalyzer
 
     statementPart()
     {
+        this.accept(SymbolsCodes.beginSy);
+        this.accept(SymbolsCodes.endSy);
+    }
 
+    goToEnd()
+    {
+        do {
+            this.nextSym()
+        } while (this.symbol !== null)
     }
 }
