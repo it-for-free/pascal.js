@@ -13,6 +13,8 @@ const Constant = require('./Tree/Constant.js');
 const Identifier = require('./Tree/Identifier.js');
 const FunctionCall = require('./Tree/FunctionCall.js');
 const ProcedureCall = require('./Tree/ProcedureCall.js');
+const SimpleVariablesType = require('./Tree/SimpleVariablesType.js');
+const VariablesDeclaration = require('./Tree/VariablesDeclaration.js');
 
 
 module.exports = class SyntaxAnalyzer
@@ -60,13 +62,16 @@ module.exports = class SyntaxAnalyzer
         this.scanProgramme();
 
         console.log(this.tree);
+        return this.tree;
     }
 
     scanProgramme()
     {
-        this.accept(SymbolsCodes.programSy);
-        this.accept(SymbolsCodes.ident);
-        this.accept(SymbolsCodes.semicolon);
+        if (this.symbol.symbolCode === SymbolsCodes.programSy) {
+            this.nextSym();
+            this.accept(SymbolsCodes.ident);
+            this.accept(SymbolsCodes.semicolon);
+        }
         this.scanBlock();
         this.accept(SymbolsCodes.point);
     }
@@ -100,35 +105,54 @@ module.exports = class SyntaxAnalyzer
     {
         if (this.symbol.symbolCode === SymbolsCodes.varSy) {
             this.nextSym();
+            this.tree.var = [];
+
             do {
-                this.varDeclaration();
+                this.tree.var.push(this.scanVarDeclaration());
                 this.accept(SymbolsCodes.semicolon);
             } while (!this.errorDetected &&
                 this.symbol.symbolCode === SymbolsCodes.ident)
-
-
         }
     }
 
-    varDeclaration()
+    scanVarDeclaration()
     {
-        this.accept(SymbolsCodes.ident);
-        while (!this.errorDetected &&
-                this.symbol.symbolCode === SymbolsCodes.comma) {
-            this.nextSym();
+        let identifiers = [];
+        let ident = null;
+        let condition = false;
+
+        do {
+            ident = new Identifier(this.symbol);
             this.accept(SymbolsCodes.ident);
-        }
+            identifiers.push(ident);
 
+            condition = (this.symbol.symbolCode === SymbolsCodes.comma);
+            if (condition) {
+                this.nextSym();
+            }
+
+        } while (!this.errorDetected &&
+                condition)
+
+        let colon = this.symbol;
         this.accept(SymbolsCodes.colon);
-        this.type();
+        let type = this.scanType();
+
+        return new VariablesDeclaration(colon, identifiers, type);
     }
 
-    type()
+    scanType()
     {
+        let typeSymbol = null;
         if (this.symbol.symbolCode === SymbolsCodes.integerSy ||
             this.symbol.symbolCode === SymbolsCodes.realSy ||
-            this.symbol.symbolCode === SymbolsCodes.charSy) {
+            this.symbol.symbolCode === SymbolsCodes.charSy ||
+            this.symbol.symbolCode === SymbolsCodes.ident) {
 
+            typeSymbol = this.symbol;
+            this.nextSym();
+
+            return new SimpleVariablesType(typeSymbol, false)
             this.nextSym();
         } else {
             this.accept(SymbolsCodes.ident);
@@ -251,18 +275,23 @@ module.exports = class SyntaxAnalyzer
             term = new UnaryMinus(this.symbol, term);
         }
 
-        while ( this.symbol.symbolCode === SymbolsCodes.plus ||
-                this.symbol.symbolCode === SymbolsCodes.minus ||
-                this.symbol.symbolCode === SymbolsCodes.or) {
+        while ( this.symbol !== null && (
+                    this.symbol.symbolCode === SymbolsCodes.plus ||
+                    this.symbol.symbolCode === SymbolsCodes.minus ||
+                    this.symbol.symbolCode === SymbolsCodes.or
+                )) {
 
             switch (this.symbol.symbolCode) {
                 case SymbolsCodes.plus:
+                    this.nextSym();
                     term = new Addition(this.symbol, term, this.scanTerm());
                     break;
                 case SymbolsCodes.minus:
+                    this.nextSym();
                     term = new Subtraction(this.symbol, term, this.scanTerm());
                     break;
                 case SymbolsCodes.orSym:
+                    this.nextSym();
                     term = new LogicalOr(this.symbol, term, this.scanTerm());
                     break;
             }
@@ -284,7 +313,6 @@ module.exports = class SyntaxAnalyzer
 //            case SymbolsCodes.divSy:
 //            case SymbolsCodes.modSy:
 //            case SymbolsCodes.andSy:
-//            case SymbolsCodes.orSy:
 
             default:
                 return multiplier;
@@ -308,10 +336,11 @@ module.exports = class SyntaxAnalyzer
             switch (this.symbol.symbolCode) {
 
             }
+        } else if ( this.symbol.symbolCode === SymbolsCodes.floatC ||
+                    this.symbol.symbolCode === SymbolsCodes.intC ||
+                    this.symbol.symbolCode === SymbolsCodes.charC) {
+            return this.scanUnsignedConstant();
         }
-
-        return this.scanConstant();
-        return this.scanVariable();
     }
 
     scanParameters()
@@ -332,7 +361,17 @@ module.exports = class SyntaxAnalyzer
     /** Синтаксическая диаграмма "константа без знака" */
     scanUnsignedConstant()
     {
+        let constant = null;
 
+        switch(this.symbol.symbolCode) {
+            case SymbolsCodes.floatC:
+            case SymbolsCodes.intC:
+            case SymbolsCodes.charC:
+                constant = new Constant(this.symbol);
+                this.nextSym();
+        }
+
+        return constant;
     }
 
     /** Синтаксическая диаграмма "константа" */

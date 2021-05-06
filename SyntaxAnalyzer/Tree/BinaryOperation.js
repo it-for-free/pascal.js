@@ -4,7 +4,7 @@ module.exports = class BinaryOperation extends TreeNodeBase
 {
     constructor(symbol, left, right)
     {
-        this.symbol = symbol;
+        super(symbol);
         this.left = left;
         this.right = right;
     }

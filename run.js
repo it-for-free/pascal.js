@@ -2,6 +2,7 @@ const FileIO = require('./IO/FileIO.js');
 const ConsoleOutput = require('./IO/ConsoleOutput.js');
 const LexicalAnalyzer = require('./LexicalAnalyzer/LexicalAnalyzer.js');
 const SyntaxAnalyzer = require('./SyntaxAnalyzer/SyntaxAnalyzer.js');
+const Engine = require('./Semantics/Engine.js');
 
 
 var fileIO = new FileIO('example.pas', new ConsoleOutput());
@@ -15,4 +16,6 @@ var symbol = null;
 //}
 
 var syntaxAnalyzer = new SyntaxAnalyzer(lexicalAnalyzer);
-syntaxAnalyzer.analyze();
+var tree = syntaxAnalyzer.analyze();
+var engine = new Engine(tree);
+engine.run();
