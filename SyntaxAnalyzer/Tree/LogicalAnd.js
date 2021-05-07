@@ -1,4 +1,4 @@
-const TreeNodeBase = require('./BinaryOperation.js');
+const BinaryOperation = require('./BinaryOperation.js');
 
 module.exports = class LogicalAnd extends BinaryOperation
 {

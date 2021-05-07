@@ -15,6 +15,8 @@ const Subtraction = require('../SyntaxAnalyzer/Tree/Subtraction.js');
 const Multiplication = require('../SyntaxAnalyzer/Tree/Multiplication.js');
 const Division = require('../SyntaxAnalyzer/Tree/Division.js');
 const UnaryMinus = require('../SyntaxAnalyzer/Tree/UnaryMinus.js');
+const CompoundOperator = require('../SyntaxAnalyzer/Tree/CompoundOperator.js');
+const Implication = require('../SyntaxAnalyzer/Tree/Implication.js');
 
 
 module.exports = class Engine
@@ -69,9 +71,6 @@ module.exports = class Engine
                 } else {
                     throw 'VariablesDeclaration object must be here!';
                 }
-
-//                console.dir(variablesDeclaration, { depth: null });
-
             });
         }
 
@@ -100,6 +99,18 @@ module.exports = class Engine
             let value = expressionResult.value;
 
             currentScope.setValue(identifier, typeId, value);
+        } else if (sentence instanceof CompoundOperator) {
+            if (sentence.sentences) {
+                let self = this;
+                sentence.sentences.forEach(
+                    function(elem)
+                    {
+                        self.evaluateSentence(elem);
+                    }
+                );
+            }
+        } else if (sentence instanceof Implication) {
+
         }
     }
 

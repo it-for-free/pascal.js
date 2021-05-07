@@ -1,6 +1,6 @@
 const BinaryOperation = require('./BinaryOperation.js');
 
-module.exports = class LogicalOr extends BinaryOperation
+module.exports = class IntegerDivision extends BinaryOperation
 {
     constructor(symbol, left, right)
     {

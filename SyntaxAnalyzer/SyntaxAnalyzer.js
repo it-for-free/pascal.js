@@ -15,6 +15,19 @@ const FunctionCall = require('./Tree/FunctionCall.js');
 const ProcedureCall = require('./Tree/ProcedureCall.js');
 const SimpleVariablesType = require('./Tree/SimpleVariablesType.js');
 const VariablesDeclaration = require('./Tree/VariablesDeclaration.js');
+const CompoundOperator = require('./Tree/CompoundOperator.js');
+const Implication = require('./Tree/Implication.js');
+const IntegerDivision = require('./Tree/IntegerDivision.js');
+const Modulo = require('./Tree/Modulo.js');
+const LogicalAnd = require('./Tree/LogicalAnd.js');
+const LogicalOr = require('./Tree/LogicalOr.js');
+const In = require('./Tree/Relations/In.js');
+const Equal = require('./Tree/Relations/Equal.js');
+const NotEqual = require('./Tree/Relations/NotEqual.js');
+const Less = require('./Tree/Relations/Less.js');
+const Greater = require('./Tree/Relations/Greater.js');
+const GreaterOrEqual = require('./Tree/Relations/GreaterOrEqual.js');
+const LessOrEqual = require('./Tree/Relations/LessOrEqual.js');
 
 
 module.exports = class SyntaxAnalyzer
@@ -61,7 +74,6 @@ module.exports = class SyntaxAnalyzer
         this.nextSym();
         this.scanProgramme();
 
-        console.log(this.tree);
         return this.tree;
     }
 
@@ -208,7 +220,42 @@ module.exports = class SyntaxAnalyzer
                 this.accept(SymbolsCodes.assign);
                 return new Assignation(assignSymbol, variable, this.scanExpression());
             }
+        } else if (this.symbol.symbolCode === SymbolsCodes.beginSy) {
+            return this.scanCompoundOperator();
+        } else if (this.symbol.symbolCode === SymbolsCodes.ifSy) {
+            let ifSymbol = this.symbol;
+            this.nextSym();
+            let condition = this.scanExpression();
+
+            this.accept(SymbolsCodes.thenSy);
+            let left = this.scanSentence();
+            let right = null;
+            if (this.symbol.symbolCode === SymbolsCodes.elseSy) {
+                this.nextSym();
+                right = this.scanSentence();
+            }
+
+            return new Implication(ifSymbol, condition, left, right);
         }
+    }
+
+    scanCompoundOperator()
+    {
+        let compoundOperator = new CompoundOperator(this.symbol);
+        this.accept(SymbolsCodes.beginSy);
+
+        while ( this.symbol !== null &&
+                this.symbol.symbolCode !== SymbolsCodes.endSy) {
+
+            let sentence = this.scanSentence();
+            compoundOperator.sentences.push(sentence);
+
+            this.accept(SymbolsCodes.semicolon);
+        }
+
+        this.accept(SymbolsCodes.endSy);
+
+        return compoundOperator;
     }
 
     /** Синтаксическая диаграмма "переменная" */
@@ -253,7 +300,33 @@ module.exports = class SyntaxAnalyzer
     /** Синтаксическая диаграмма "выражение" */
     scanExpression()
     {
-        return this.scanSimpleExpression();
+        let simpleExpression = this.scanSimpleExpression();
+
+        switch (this.symbol.symbolCode) {
+            case SymbolsCodes.equal:
+                this.nextSym();
+                return new Equal(this.symbol, simpleExpression, this.scanSimpleExpression());
+            case SymbolsCodes.later:
+                this.nextSym();
+                return new Less(this.symbol, simpleExpression, this.scanSimpleExpression());
+            case SymbolsCodes.greater:
+                this.nextSym();
+                return new Greater(this.symbol, simpleExpression, this.scanSimpleExpression());
+            case SymbolsCodes.laterGreater:
+                this.nextSym();
+                return new NotEqual(this.symbol, simpleExpression, this.scanSimpleExpression());
+            case SymbolsCodes.laterEqual:
+                this.nextSym();
+                return new LogicalAnd(this.symbol, simpleExpression, this.scanSimpleExpression());
+            case SymbolsCodes.greaterEqual:
+                this.nextSym();
+                return new GreaterOrEqual(this.symbol, simpleExpression, this.scanSimpleExpression());
+            case SymbolsCodes.inSy:
+                this.nextSym();
+                return new In(this.symbol, simpleExpression, this.scanSimpleExpression());
+            default:
+                return simpleExpression;
+        }
     }
 
     /** Синтаксическая диаграмма "простое выражение" */
@@ -310,10 +383,12 @@ module.exports = class SyntaxAnalyzer
                 return new Multiplication(this.symbol, multiplier, this.scanMultiplier());
             case SymbolsCodes.slash:
                 return new Division(this.symbol, multiplier, this.scanMultiplier());
-//            case SymbolsCodes.divSy:
-//            case SymbolsCodes.modSy:
-//            case SymbolsCodes.andSy:
-
+            case SymbolsCodes.divSy:
+                return new IntegerDivision(this.symbol, multiplier, this.scanMultiplier());
+            case SymbolsCodes.modSy:
+                return new Modulo(this.symbol, multiplier, this.scanMultiplier());
+            case SymbolsCodes.andSy:
+                return new LogicalAnd(this.symbol, multiplier, this.scanMultiplier());
             default:
                 return multiplier;
         }
