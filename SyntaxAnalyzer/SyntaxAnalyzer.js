@@ -21,6 +21,9 @@ const IntegerDivision = require('./Tree/IntegerDivision.js');
 const Modulo = require('./Tree/Modulo.js');
 const LogicalAnd = require('./Tree/LogicalAnd.js');
 const LogicalOr = require('./Tree/LogicalOr.js');
+const UnaryMinus = require('./Tree/UnaryMinus.js');
+const Procedure = require('./Tree/Procedure.js');
+const Function = require('./Tree/Function.js');
 const In = require('./Tree/Relations/In.js');
 const Equal = require('./Tree/Relations/Equal.js');
 const NotEqual = require('./Tree/Relations/NotEqual.js');
@@ -28,6 +31,10 @@ const Less = require('./Tree/Relations/Less.js');
 const Greater = require('./Tree/Relations/Greater.js');
 const GreaterOrEqual = require('./Tree/Relations/GreaterOrEqual.js');
 const LessOrEqual = require('./Tree/Relations/LessOrEqual.js');
+const FunctionTypeApplied = require('./Tree/ParametersList/FunctionTypeApplied.js');
+const ProcedureTypeApplied = require('./Tree/ParametersList/ProcedureTypeApplied.js');
+const SimpleTypeApplied = require('./Tree/ParametersList/SimpleTypeApplied.js');
+const TypesIds = require('../Semantics/Variables/TypesIds.js');
 
 
 module.exports = class SyntaxAnalyzer
@@ -38,6 +45,8 @@ module.exports = class SyntaxAnalyzer
         this.symbolsDescription = new SymbolsDescription();
         this.symbol = null;
         this.tree = null;
+        this.trees = [];
+        this.treesCounter = 0;
         this.errorDetected = false;
     }
 
@@ -71,6 +80,8 @@ module.exports = class SyntaxAnalyzer
     analyze()
     {
         this.tree = {};
+        this.trees[this.treesCounter] = this.tree;
+
         this.nextSym();
         this.scanProgramme();
 
@@ -157,6 +168,7 @@ module.exports = class SyntaxAnalyzer
     {
         let typeSymbol = null;
         if (this.symbol.symbolCode === SymbolsCodes.integerSy ||
+            this.symbol.symbolCode === SymbolsCodes.booleanSy ||
             this.symbol.symbolCode === SymbolsCodes.realSy ||
             this.symbol.symbolCode === SymbolsCodes.charSy ||
             this.symbol.symbolCode === SymbolsCodes.ident) {
@@ -173,7 +185,211 @@ module.exports = class SyntaxAnalyzer
 
     procFuncPart()
     {
+        this.tree.procedures = [];
+        this.tree.functions = [];
 
+        while (this.symbol.symbolCode === SymbolsCodes.procedureSy ||
+                this.symbol.symbolCode === SymbolsCodes.functionSy) {
+            switch (this.symbol.symbolCode) {
+                case SymbolsCodes.procedureSy:
+                    this.tree.procedures.push(this.scanProcedure());
+                    break;
+                case SymbolsCodes.functionSy:
+                    this.tree.functions.push(this.scanFunction());
+            }
+        }
+    }
+
+    scanProcedure()
+    {
+        let procedureSymbol = this.symbol;
+        this.accept(SymbolsCodes.procedureSy);
+
+        this.treesCounter++;
+        this.tree = new Procedure(procedureSymbol);
+        this.trees[this.treesCounter] = this.tree;
+        this.tree.name = new Identifier(this.symbol);
+
+        this.accept(SymbolsCodes.ident);
+        this.tree.signature = this.scanParametersList();
+        this.accept(SymbolsCodes.semicolon);
+
+
+        this.scanBlock();
+        this.accept(SymbolsCodes.semicolon);
+
+        this.trees[this.treesCounter - 1].procedures.push(this.tree);
+        this.treesCounter--;
+        this.tree = this.trees[this.treesCounter];
+    }
+
+    scanFunction()
+    {
+        this.accept(SymbolsCodes.functionSy);
+
+    }
+
+    /** Синтаксическая диаграмма "список параметров" */
+    scanParametersList()
+    {
+        let parametersList = [];
+
+        if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
+            this.nextSym();
+            if (this.symbol.symbolCode !== SymbolsCodes.rightPar) {
+
+                do {
+
+                    if (parametersList.length > 0 &&
+                        this.symbol.symbolCode === SymbolsCodes.semicolon ) {
+
+                        this.nextSym();
+                    }
+
+                    let parameters = null;
+                    switch (this.symbol.symbolCode) {
+                        case SymbolsCodes.varSy:
+                            parameters = new SimpleTypeApplied(this.symbol, true);
+                            this.nextSym();
+                            break;
+                        case SymbolsCodes.functionSy:
+                            parameters = new FunctionTypeApplied(this.symbol);
+                            this.nextSym();
+                            break;
+                        case SymbolsCodes.procedureSy:
+                            parameters = new ProcedureTypeApplied(this.symbol);
+                            this.nextSym();
+                            break;
+                        case SymbolsCodes.ident:
+                            parameters = new SimpleTypeApplied(this.symbol);
+                            break;
+                    }
+
+                    let identifiers = [];
+
+                    do {
+                        if (identifiers.length > 0 &&
+                            this.symbol.symbolCode === SymbolsCodes.comma) {
+                            this.nextSym();
+                        }
+
+                        identifiers.push(new Identifier(this.symbol));
+                        this.accept(SymbolsCodes.ident);
+
+                    } while (this.symbol.symbolCode === SymbolsCodes.comma)
+
+                    parameters.identifiers = identifiers;
+
+                    if (parameters instanceof FunctionTypeApplied ||
+                        parameters instanceof ProcedureTypeApplied) {
+
+                        parameters.signature = this.scanParametersList();
+                        this.accept(SymbolsCodes.colon);
+                        parameters.returnType = this.scanReturnType();
+                    } else {
+
+                        this.accept(SymbolsCodes.colon);
+
+                        switch (this.symbol.symbolCode) {
+                            case SymbolsCodes.charSy:
+                                parameters.typeId = TypesIds.CHAR;
+                                this.nextSym();
+                                break;
+                            case SymbolsCodes.integerSy:
+                                parameters.typeId = TypesIds.INTEGER;
+                                this.nextSym();
+                                break;
+                            case SymbolsCodes.stringSy:
+                                parameters.typeId = TypesIds.STRING;
+                                this.nextSym();
+                                break;
+                            case SymbolsCodes.realSy:
+                                parameters.typeId = TypesIds.REAL;
+                                this.nextSym();
+                                break;
+                            case SymbolsCodes.booleanSy:
+                                parameters.typeId = TypesIds.BOOLEAN;
+                                this.nextSym();
+                                break;
+                            case SymbolsCodes.ident:
+                                parameters = new SimpleTypeApplied(this.symbol);
+                                parameters.typeIdentifier = new Identifier(this.symbol);
+                                this.nextSym();
+                                break;
+                        }
+                    }
+
+
+
+                    parametersList.push(parameters);
+
+                } while (this.symbol.symbolCode === SymbolsCodes.semicolon)
+
+                this.accept(SymbolsCodes.rightPar);
+            }
+        }
+
+        return parametersList;
+    }
+
+    scanReturnType()
+    {
+        let returnType = null;
+
+        switch (this.symbol.symbolCode) {
+            case SymbolsCodes.charSy:
+            case SymbolsCodes.integerSy:
+            case SymbolsCodes.stringSy:
+            case SymbolsCodes.realSy:
+            case SymbolsCodes.booleanSy:
+                returnType = new SimpleTypeApplied(this.symbol)
+                break;
+            case SymbolsCodes.functionSy:
+                returnType = new FunctionTypeApplied(this.symbol)
+                break;
+            case SymbolsCodes.procedureSy:
+                returnType = new ProcedureTypeApplied(this.symbol)
+                break;
+            case SymbolsCodes.ident:
+                returnType = new SimpleTypeApplied(this.symbol);
+                returnType.typeIdentifier = new Identifier(this.symbol);
+                break;
+        }
+
+        switch (this.symbol.symbolCode) {
+            case SymbolsCodes.charSy:
+                returnType.typeId = TypesIds.CHAR;
+                this.nextSym();
+                break;
+            case SymbolsCodes.integerSy:
+                returnType.typeId = TypesIds.INTEGER;
+                this.nextSym();
+                break;
+            case SymbolsCodes.stringSy:
+                returnType.typeId = TypesIds.STRING;
+                this.nextSym();
+                break;
+            case SymbolsCodes.realSy:
+                returnType.typeId = TypesIds.REAL;
+                this.nextSym();
+                break;
+            case SymbolsCodes.booleanSy:
+                returnType.typeId = TypesIds.BOOLEAN;
+                this.nextSym();
+                break;
+            case SymbolsCodes.functionSy:
+                this.nextSym();
+                returnType.signature = this.scanParametersList();
+                this.accept(SymbolsCodes.colon);
+                returnType.returnType = this.scanReturnType();
+                break;
+            case SymbolsCodes.procedureSy:
+                this.nextSym();
+                returnType.signature = this.scanParametersList(false);
+                break;
+        }
+
+        return returnType;
     }
 
     statementPart()
@@ -317,7 +533,7 @@ module.exports = class SyntaxAnalyzer
                 return new NotEqual(this.symbol, simpleExpression, this.scanSimpleExpression());
             case SymbolsCodes.laterEqual:
                 this.nextSym();
-                return new LogicalAnd(this.symbol, simpleExpression, this.scanSimpleExpression());
+                return new LessOrEqual(this.symbol, simpleExpression, this.scanSimpleExpression());
             case SymbolsCodes.greaterEqual:
                 this.nextSym();
                 return new GreaterOrEqual(this.symbol, simpleExpression, this.scanSimpleExpression());
@@ -338,7 +554,6 @@ module.exports = class SyntaxAnalyzer
         switch (this.symbol.symbolCode) {
             case SymbolsCodes.minus:
                 unaryMinus = true;
-                break;
             case SymbolsCodes.plus:
                 this.nextSym();
         }
@@ -380,14 +595,19 @@ module.exports = class SyntaxAnalyzer
 
         switch (this.symbol.symbolCode) {
             case SymbolsCodes.star:
+                this.nextSym();
                 return new Multiplication(this.symbol, multiplier, this.scanMultiplier());
             case SymbolsCodes.slash:
+                this.nextSym();
                 return new Division(this.symbol, multiplier, this.scanMultiplier());
             case SymbolsCodes.divSy:
+                this.nextSym();
                 return new IntegerDivision(this.symbol, multiplier, this.scanMultiplier());
             case SymbolsCodes.modSy:
+                this.nextSym();
                 return new Modulo(this.symbol, multiplier, this.scanMultiplier());
             case SymbolsCodes.andSy:
+                this.nextSym();
                 return new LogicalAnd(this.symbol, multiplier, this.scanMultiplier());
             default:
                 return multiplier;
@@ -413,6 +633,7 @@ module.exports = class SyntaxAnalyzer
             }
         } else if ( this.symbol.symbolCode === SymbolsCodes.floatC ||
                     this.symbol.symbolCode === SymbolsCodes.intC ||
+                    this.symbol.symbolCode === SymbolsCodes.stringC ||
                     this.symbol.symbolCode === SymbolsCodes.charC) {
             return this.scanUnsignedConstant();
         }
@@ -423,6 +644,12 @@ module.exports = class SyntaxAnalyzer
         let parameters = [];
         if (this.symbol.symbolCode !== SymbolsCodes.rightPar) {
             do {
+
+                if (parameters.length > 0 &&
+                    this.symbol.symbolCode === SymbolsCodes.comma) {
+                    this.nextSym();
+                }
+
                 parameters.push(this.scanExpression());
 
             } while (this.symbol.symbolCode === SymbolsCodes.comma)
@@ -442,6 +669,7 @@ module.exports = class SyntaxAnalyzer
             case SymbolsCodes.floatC:
             case SymbolsCodes.intC:
             case SymbolsCodes.charC:
+            case SymbolsCodes.stringC:
                 constant = new Constant(this.symbol);
                 this.nextSym();
         }
@@ -470,6 +698,7 @@ module.exports = class SyntaxAnalyzer
             case SymbolsCodes.floatC:
             case SymbolsCodes.intC:
             case SymbolsCodes.charC:
+            case SymbolsCodes.stringC:
                 constant = new Constant(this.symbol);
                 this.nextSym();
         }
@@ -480,4 +709,4 @@ module.exports = class SyntaxAnalyzer
 
         return constant;
     }
-}
+};

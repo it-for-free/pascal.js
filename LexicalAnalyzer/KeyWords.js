@@ -35,11 +35,13 @@ module.exports = class KeyWords
             ['label', SymbolsCodes.labelSy],
             ['until', SymbolsCodes.untilSy],
             ['downto', SymbolsCodes.downtoSy],
+            ['string', SymbolsCodes.stringSy],
             ['packed', SymbolsCodes.packedSy],
             ['record', SymbolsCodes.recordSy],
             ['repeat', SymbolsCodes.repeatSy],
             ['program', SymbolsCodes.programSy],
             ['integer', SymbolsCodes.integerSy],
+            ['boolean', SymbolsCodes.booleanSy],
             ['function', SymbolsCodes.functionSy],
             ['procedure', SymbolsCodes.procedureSy]
         ]);

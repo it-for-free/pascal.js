@@ -1,6 +1,5 @@
 const TypesIds = require('./Variables/TypesIds.js');
 const ScalarVariable = require('./Variables/ScalarVariable.js');
-//const SimpleVariablesType = require('./SyntaxAnalyzer/Tree/SimpleVariablesType.js');
 
 
 module.exports = class Scope
@@ -13,33 +12,36 @@ module.exports = class Scope
 
     addVariable(name, typeId, value = null)
     {
-        if (this.items.hasOwnProperty(name.toLowerCase())) {
+        let lowerCaseName = name.toLowerCase();
+        if (this.items.hasOwnProperty(lowerCaseName)) {
             // already declared
         } else {
-            this.items[name] = new ScalarVariable(value, typeId);
+            this.items[lowerCaseName] = new ScalarVariable(value, typeId);
         }
-
     }
 
     setValue(name, typeId, value)
     {
-        if (!this.items.hasOwnProperty(name.toLowerCase())) {
+        let lowerCaseName = name.toLowerCase();
+        if (!this.items.hasOwnProperty(lowerCaseName)) {
             // not declared
         } else {
-            let item = this.items[name];
+            let item = this.items[lowerCaseName];
             if (item instanceof ScalarVariable) {
                 if (item.typeId === typeId) {
-                    this.items[name].value = value;
+                    this.items[lowerCaseName].value = value;
                 } else {
                     // types mismatch
                 }
             }
-
         }
     }
 
     getVariable(name)
     {
-        this.items.hasOwnProperty(name.toLowerCase());
+        let lowerCaseName = name.toLowerCase();
+        if (this.items.hasOwnProperty(lowerCaseName)) {
+            return this.items[lowerCaseName];
+        }
     }
 }

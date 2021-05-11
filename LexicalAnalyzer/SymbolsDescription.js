@@ -64,6 +64,7 @@ module.exports = class SymbolsDescription
             [SymbolsCodes.constSy, 'const'],
             [SymbolsCodes.labelSy, 'label'],
             [SymbolsCodes.downtoSy, 'downto'],
+            [SymbolsCodes.stringSy, 'string'],
             [SymbolsCodes.packedSy, 'packed'],
             [SymbolsCodes.recordSy, 'record'],
             [SymbolsCodes.repeatSy, 'repeat'],

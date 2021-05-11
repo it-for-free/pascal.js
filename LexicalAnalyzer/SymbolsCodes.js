@@ -28,6 +28,7 @@ module.exports = {
     floatC          :82,   /* Float Constant */
     intC            :15,   /* Integer Constant */
     charC           :83,   /* Character Constant */
+    stringC         :84,   /* String Constant */
     caseSy          :31,
     elseSy          :32,
     fileSy          :57,
@@ -58,11 +59,13 @@ module.exports = {
     constSy         :125,
     labelSy         :126,
     downtoSy        :128,
-    packedSy        :129,
-    recordSy        :130,
-    repeatSy        :131,
-    integerSy       :132,
-    programSy       :133,
-    functionSy      :134,
-    procedureSy     :135
-}
+    stringSy        :129,
+    packedSy        :130,
+    recordSy        :131,
+    repeatSy        :132,
+    integerSy       :133,
+    booleanSy       :134,
+    programSy       :135,
+    functionSy      :136,
+    procedureSy     :137
+};

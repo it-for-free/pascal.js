@@ -4,5 +4,6 @@ module.exports = {
     CHAR: 2,
     ARRAY: 3,
     RECORD: 4,
-    ENUM: 5
-}
+    ENUM: 5,
+    BOOLEAN: 6
+};

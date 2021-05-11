@@ -14,9 +14,20 @@ const Addition = require('../SyntaxAnalyzer/Tree/Addition.js');
 const Subtraction = require('../SyntaxAnalyzer/Tree/Subtraction.js');
 const Multiplication = require('../SyntaxAnalyzer/Tree/Multiplication.js');
 const Division = require('../SyntaxAnalyzer/Tree/Division.js');
+const IntegerDivision = require('../SyntaxAnalyzer/Tree/IntegerDivision.js');
+const Modulo = require('../SyntaxAnalyzer/Tree/Modulo.js');
+const LogicalAnd = require('../SyntaxAnalyzer/Tree/LogicalAnd.js');
+const LogicalOr = require('../SyntaxAnalyzer/Tree/LogicalOr.js');
 const UnaryMinus = require('../SyntaxAnalyzer/Tree/UnaryMinus.js');
 const CompoundOperator = require('../SyntaxAnalyzer/Tree/CompoundOperator.js');
 const Implication = require('../SyntaxAnalyzer/Tree/Implication.js');
+const In = require('../SyntaxAnalyzer/Tree/Relations/In.js');
+const Equal = require('../SyntaxAnalyzer/Tree/Relations/Equal.js');
+const NotEqual = require('../SyntaxAnalyzer/Tree/Relations/NotEqual.js');
+const Less = require('../SyntaxAnalyzer/Tree/Relations/Less.js');
+const Greater = require('../SyntaxAnalyzer/Tree/Relations/Greater.js');
+const GreaterOrEqual = require('../SyntaxAnalyzer/Tree/Relations/GreaterOrEqual.js');
+const LessOrEqual = require('../SyntaxAnalyzer/Tree/Relations/LessOrEqual.js');
 
 
 module.exports = class Engine
@@ -50,6 +61,13 @@ module.exports = class Engine
                         switch (symbolCode) {
                             case SymbolsCodes.integerSy:
                                 typeId = TypesIds.INTEGER;
+                                break;
+                            case SymbolsCodes.booleanSy:
+                                typeId = TypesIds.BOOLEAN;
+                                break;
+                            case SymbolsCodes.realSy:
+                                typeId = TypesIds.REAL;
+                                break;
                         }
                     }
 
@@ -110,13 +128,70 @@ module.exports = class Engine
                 );
             }
         } else if (sentence instanceof Implication) {
-
+            let condition = this.evaluateExpression(sentence.condition);
+            console.log(condition);
+            if (condition.value === true) {
+                this.evaluateSentence(sentence.left);
+            } else {
+                this.evaluateSentence(sentence.right);
+            }
         }
     }
 
     evaluateExpression(expression)
     {
-        return this.evaluateSimpleExpression(expression);
+        if (expression instanceof Equal) {
+            let leftOperand = this.evaluateExpression(expression.left);
+            let rightOperand = this.evaluateExpression(expression.right);
+            let typeId = TypesIds.BOOLEAN;
+            let result = leftOperand.value === rightOperand.value;
+
+            return new ScalarVariable(result, typeId);
+        } else if (expression instanceof Greater) {
+            let leftOperand = this.evaluateExpression(expression.left);
+            let rightOperand = this.evaluateExpression(expression.right);
+            let typeId = TypesIds.BOOLEAN;
+            let result = leftOperand.value > rightOperand.value;
+
+            return new ScalarVariable(result, typeId)
+        } else if (expression instanceof Less) {
+            let leftOperand = this.evaluateExpression(expression.left);
+            let rightOperand = this.evaluateExpression(expression.right);
+            let typeId = TypesIds.BOOLEAN;
+            let result = leftOperand.value < rightOperand.value;
+
+            return new ScalarVariable(result, typeId)
+        } else if (expression instanceof GreaterOrEqual) {
+            let leftOperand = this.evaluateExpression(expression.left);
+            let rightOperand = this.evaluateExpression(expression.right);
+            let typeId = TypesIds.BOOLEAN;
+            let result = leftOperand.value >= rightOperand.value;
+
+            return new ScalarVariable(result, typeId)
+        } else if (expression instanceof LessOrEqual) {
+            let leftOperand = this.evaluateExpression(expression.left);
+            let rightOperand = this.evaluateExpression(expression.right);
+            let typeId = TypesIds.BOOLEAN;
+            let result = leftOperand.value <= rightOperand.value;
+
+            return new ScalarVariable(result, typeId)
+        } else if (expression instanceof NotEqual) {
+            let leftOperand = this.evaluateExpression(expression.left);
+            let rightOperand = this.evaluateExpression(expression.right);
+            let typeId = TypesIds.BOOLEAN;
+            let result = leftOperand.value !== rightOperand.value;
+
+            return new ScalarVariable(result, typeId)
+        } else if (expression instanceof In) {
+            let leftOperand = this.evaluateExpression(expression.left);
+            let rightOperand = this.evaluateExpression(expression.right);
+            let typeId = TypesIds.BOOLEAN;
+            let result = false;
+
+            return new ScalarVariable(result, typeId)
+        } else {
+            return this.evaluateSimpleExpression(expression);
+        }
     }
 
     evaluateSimpleExpression(expression)
@@ -137,6 +212,13 @@ module.exports = class Engine
             }
 
             return new ScalarVariable(result, typeId);
+        } else if (expression instanceof LogicalOr) {
+            let leftOperand = this.evaluateSimpleExpression(expression.left);
+            let rightOperand = this.evaluateSimpleExpression(expression.right);
+            let typeId = TypesIds.BOOLEAN;
+            let result = leftOperand.value || rightOperand.value;
+
+            return new ScalarVariable(result, typeId);
         } else {
             return this.evaluateTerm(expression);
         }
@@ -145,12 +227,44 @@ module.exports = class Engine
     evaluateTerm(expression)
     {
         if (expression instanceof UnaryMinus) {
-            let term = this.evaluateTerm(expression.term);
+            let term = this.evaluateTerm(expression.value);
             return new ScalarVariable(-term.value, term.typeId);
         } else if (expression instanceof Multiplication) {
+            let leftOperand = this.evaluateMultiplier(expression.left);
+            let rightOperand = this.evaluateMultiplier(expression.right);
+            let typeId = leftOperand.typeId === TypesIds.REAL ||
+                    rightOperand.typeId === TypesIds.REAL ? TypesIds.REAL : TypesIds.INTEGER;
+            let result = leftOperand.value * rightOperand.value;
 
+            return new ScalarVariable(result, typeId);
         } else if (expression instanceof Division) {
+            let leftOperand = this.evaluateMultiplier(expression.left);
+            let rightOperand = this.evaluateMultiplier(expression.right);
+            let typeId = TypesIds.REAL;
+            let result = leftOperand.value / rightOperand.value;
 
+            return new ScalarVariable(result, typeId);
+        } else if (expression instanceof IntegerDivision) {
+            let leftOperand = this.evaluateMultiplier(expression.left);
+            let rightOperand = this.evaluateMultiplier(expression.right);
+            let typeId = TypesIds.INTEGER;
+            let result = Math.trunc(leftOperand.value / rightOperand.value);
+
+            return new ScalarVariable(result, typeId);
+        } else if (expression instanceof Modulo) {
+            let leftOperand = this.evaluateMultiplier(expression.left);
+            let rightOperand = this.evaluateMultiplier(expression.right);
+            let typeId = TypesIds.INTEGER;
+            let result = leftOperand.value % rightOperand.value;
+
+            return new ScalarVariable(result, typeId);
+        } else if (expression instanceof LogicalAnd) {
+            let leftOperand = this.evaluateMultiplier(expression.left);
+            let rightOperand = this.evaluateMultiplier(expression.right);
+            let typeId = TypesIds.BOOLEAN;
+            let result = leftOperand.value && rightOperand.value;
+
+            return new ScalarVariable(result, typeId);
         } else {
             return this.evaluateMultiplier(expression);
         }
@@ -178,4 +292,4 @@ module.exports = class Engine
 
         return null;
     }
-}
+};

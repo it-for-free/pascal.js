@@ -4,6 +4,7 @@ const Symbol = require('./Symbols/Symbol.js');
 const NmbFloat = require('./Symbols/NmbFloat.js');
 const NmbInt = require('./Symbols/NmbInt.js');
 const OneSymbol = require('./Symbols/OneSymbol.js');
+const StringConstant = require('./Symbols/StringConstant.js');
 const ErrorsCodes = require('../Errors/ErrorsCodes.js');
 
 module.exports = class LexicalAnalyzer
@@ -214,7 +215,10 @@ module.exports = class LexicalAnalyzer
                     } while (this.char !== "'")
 
                     this.char = this.fileIO.nextCh();
-                    return new OneSymbol(this.token, SymbolsCodes.charC, this.currentWord);
+
+                    return this.currentWord.length === 3 ?
+                        new OneSymbol(this.token, SymbolsCodes.charC, this.currentWord) :
+                        new StringConstant(this.token, SymbolsCodes.stringC, this.currentWord);
             }
         }
 
@@ -241,4 +245,4 @@ module.exports = class LexicalAnalyzer
     {
         this.fileIO.addError(this.errorsCodes.forbiddenCharacter, ` '${character}'`, this.token)
     }
-}
+};
