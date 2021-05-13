@@ -22,6 +22,7 @@ const Modulo = require('./Tree/Modulo.js');
 const LogicalAnd = require('./Tree/LogicalAnd.js');
 const LogicalOr = require('./Tree/LogicalOr.js');
 const UnaryMinus = require('./Tree/UnaryMinus.js');
+const Program = require('./Tree/Program.js');
 const Procedure = require('./Tree/Procedure.js');
 const Function = require('./Tree/Function.js');
 const In = require('./Tree/Relations/In.js');
@@ -79,7 +80,7 @@ module.exports = class SyntaxAnalyzer
 
     analyze()
     {
-        this.tree = {};
+        this.tree = new Program(this.symbol);
         this.trees[this.treesCounter] = this.tree;
 
         this.nextSym();
@@ -128,10 +129,9 @@ module.exports = class SyntaxAnalyzer
     {
         if (this.symbol.symbolCode === SymbolsCodes.varSy) {
             this.nextSym();
-            this.tree.var = [];
 
             do {
-                this.tree.var.push(this.scanVarDeclaration());
+                this.tree.vars.push(this.scanVarDeclaration());
                 this.accept(SymbolsCodes.semicolon);
             } while (!this.errorDetected &&
                 this.symbol.symbolCode === SymbolsCodes.ident)
@@ -185,17 +185,14 @@ module.exports = class SyntaxAnalyzer
 
     procFuncPart()
     {
-        this.tree.procedures = [];
-        this.tree.functions = [];
-
         while (this.symbol.symbolCode === SymbolsCodes.procedureSy ||
                 this.symbol.symbolCode === SymbolsCodes.functionSy) {
             switch (this.symbol.symbolCode) {
                 case SymbolsCodes.procedureSy:
-                    this.tree.procedures.push(this.scanProcedure());
+                    this.scanProcedure();
                     break;
                 case SymbolsCodes.functionSy:
-                    this.tree.functions.push(this.scanFunction());
+                    this.scanFunction();
             }
         }
     }
@@ -209,7 +206,7 @@ module.exports = class SyntaxAnalyzer
         this.tree = new Procedure(procedureSymbol);
         this.trees[this.treesCounter] = this.tree;
         this.tree.name = new Identifier(this.symbol);
-
+        let procedureName = this.tree.name.symbol.value;
         this.accept(SymbolsCodes.ident);
         this.tree.signature = this.scanParametersList();
         this.accept(SymbolsCodes.semicolon);
@@ -218,7 +215,7 @@ module.exports = class SyntaxAnalyzer
         this.scanBlock();
         this.accept(SymbolsCodes.semicolon);
 
-        this.trees[this.treesCounter - 1].procedures.push(this.tree);
+        this.trees[this.treesCounter - 1].procedures[procedureName] = this.tree;
         this.treesCounter--;
         this.tree = this.trees[this.treesCounter];
     }
@@ -396,8 +393,6 @@ module.exports = class SyntaxAnalyzer
     {
         this.accept(SymbolsCodes.beginSy);
 
-        this.tree.sentences = [];
-
         while ( this.symbol !== null &&
                 this.symbol.symbolCode !== SymbolsCodes.endSy) {
 
@@ -428,7 +423,7 @@ module.exports = class SyntaxAnalyzer
             if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
                 this.nextSym();
                 let parameters = this.scanParameters();
-                return new ProcedureCall(ident, parameters);
+                return new ProcedureCall(ident, new Identifier(ident), parameters);
             // Имя переменной или функции
             } else {
                 let variable = this.scanVariable(ident);
@@ -509,7 +504,7 @@ module.exports = class SyntaxAnalyzer
                 return new GetByPointer(arrow, ident);
 
             default:
-                return new Identifier(ident)
+                return new Identifier(ident);
         }
     }
 
@@ -618,19 +613,22 @@ module.exports = class SyntaxAnalyzer
     scanMultiplier()
     {
         if (this.symbol.symbolCode === SymbolsCodes.ident) {
-            let variable = this.scanVariable();
-            // имя функции
-            if (variable instanceof Identifier &&
-                this.symbol.symbolCode === SymbolsCodes.leftPar) {
-                this.nextSym();
-                let parameters = this.scanParameters();
+            let ident = this.symbol;
+            this.nextSym();
+            let variable = this.scanVariable(ident);
+            // имя функции или переменной
+            if (variable instanceof Identifier) {
 
-                return new FunctionCall(variable.symbol, parameters);
+                if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
+                    this.nextSym();
+                    let parameters = this.scanParameters();
+
+                    return new FunctionCall(variable.symbol, parameters);
+                } else {
+                    return variable;
+                }
             }
 
-            switch (this.symbol.symbolCode) {
-
-            }
         } else if ( this.symbol.symbolCode === SymbolsCodes.floatC ||
                     this.symbol.symbolCode === SymbolsCodes.intC ||
                     this.symbol.symbolCode === SymbolsCodes.stringC ||

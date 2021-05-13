@@ -21,6 +21,7 @@ const LogicalOr = require('../SyntaxAnalyzer/Tree/LogicalOr.js');
 const UnaryMinus = require('../SyntaxAnalyzer/Tree/UnaryMinus.js');
 const CompoundOperator = require('../SyntaxAnalyzer/Tree/CompoundOperator.js');
 const Implication = require('../SyntaxAnalyzer/Tree/Implication.js');
+const ProcedureCall = require('../SyntaxAnalyzer/Tree/ProcedureCall.js');
 const In = require('../SyntaxAnalyzer/Tree/Relations/In.js');
 const Equal = require('../SyntaxAnalyzer/Tree/Relations/Equal.js');
 const NotEqual = require('../SyntaxAnalyzer/Tree/Relations/NotEqual.js');
@@ -35,6 +36,8 @@ module.exports = class Engine
     constructor(tree)
     {
         this.tree = tree;
+        this.trees = [this.tree];
+        this.treesCounter = 0;
         this.scopes = [];
         this.currentScopeId = 0;
         this.scopes[this.currentScopeId] = new Scope();
@@ -47,10 +50,27 @@ module.exports = class Engine
 
     run()
     {
+        this.setVariables();
+
+        let self = this;
+        if (this.tree.sentences) {
+            this.tree.sentences.forEach(
+                function(sentence)
+                {
+                    self.evaluateSentence(sentence);
+                }
+            );
+        }
+
+        console.dir(this.scopes, { depth: null });
+    }
+
+    setVariables()
+    {
         let currentScope = this.getCurrentScope();
 
-        if (this.tree.var) {
-            this.tree.var.forEach(function (variablesDeclaration) {
+        if (this.tree.vars) {
+            this.tree.vars.forEach(function (variablesDeclaration) {
                 if (variablesDeclaration instanceof VariablesDeclaration) {
 
                     let typeId = null;
@@ -91,18 +111,6 @@ module.exports = class Engine
                 }
             });
         }
-
-        let self = this;
-        if (this.tree.sentences) {
-            this.tree.sentences.forEach(
-                function(sentence)
-                {
-                    self.evaluateSentence(sentence);
-                }
-            );
-        }
-
-        console.dir(currentScope, { depth: null });
     }
 
     evaluateSentence(sentence)
@@ -129,12 +137,27 @@ module.exports = class Engine
             }
         } else if (sentence instanceof Implication) {
             let condition = this.evaluateExpression(sentence.condition);
-            console.log(condition);
+
             if (condition.value === true) {
                 this.evaluateSentence(sentence.left);
             } else {
                 this.evaluateSentence(sentence.right);
             }
+        } else if (sentence instanceof ProcedureCall) {
+            this.treesCounter++;
+            let procedureName = sentence.identifier.symbol.value;
+            this.tree = this.tree.procedures[procedureName];
+            this.currentScopeId++;
+            this.scopes[this.currentScopeId] = new Scope();
+
+            this.run();
+            delete this.scopes[this.currentScopeId];
+
+            this.currentScopeId--;
+            this.treesCounter--;
+            this.tree = this.trees[this.treesCounter];
+
+//            this.trees[this.treesCounter] = this.tree;
         }
     }
 
@@ -274,6 +297,12 @@ module.exports = class Engine
     {
         if (expression instanceof Constant) {
             return new ScalarVariable(expression.symbol.value, this.getConstantTypeId(expression));
+        } else if (expression instanceof Identifier) {
+            let currentScope = this.getCurrentScope();
+            let name = expression.symbol.value;
+            let foundVariable = currentScope.getVariable(name);
+
+            return new ScalarVariable(foundVariable.value, foundVariable.typeId);
         }
     }
 

@@ -7,8 +7,8 @@ module.exports = class ProgramBase extends TreeNodeBase
         super(symbol);
         this.name = null;
         this.vars = [];
-        this.procedures = [];
-        this.functions = [];
+        this.procedures = {};
+        this.functions = {};
         this.sentences = [];
     }
 };
