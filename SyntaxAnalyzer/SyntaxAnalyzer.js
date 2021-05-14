@@ -634,6 +634,11 @@ module.exports = class SyntaxAnalyzer
                     this.symbol.symbolCode === SymbolsCodes.stringC ||
                     this.symbol.symbolCode === SymbolsCodes.charC) {
             return this.scanUnsignedConstant();
+        } else if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
+            this.nextSym();
+            let embeddedExpression = this.scanExpression();
+            this.accept(SymbolsCodes.rightPar);
+            return embeddedExpression;
         }
     }
 

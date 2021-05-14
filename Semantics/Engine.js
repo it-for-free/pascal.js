@@ -97,7 +97,7 @@ module.exports = class Engine
                             {
                                 if (identifier instanceof Identifier) {
                                     let name = identifier.symbol.value;
-                                    currentScope.addVariable(name, typeId)
+                                    currentScope.addVariable(name, typeId);
 
                                 } else {
                                     throw 'Identifier must be here!';
@@ -144,11 +144,16 @@ module.exports = class Engine
                 this.evaluateSentence(sentence.right);
             }
         } else if (sentence instanceof ProcedureCall) {
-            this.treesCounter++;
+
             let procedureName = sentence.identifier.symbol.value;
-            this.tree = this.tree.procedures[procedureName];
+            let procedure = this.tree.procedures[procedureName];
+
+            let scope = new Scope();
+            this.addParametersToScope(sentence.parameters, procedure.signature, scope);
+            this.treesCounter++;
+            this.tree = procedure;
             this.currentScopeId++;
-            this.scopes[this.currentScopeId] = new Scope();
+            this.scopes[this.currentScopeId] = scope;
 
             this.run();
             delete this.scopes[this.currentScopeId];
@@ -156,9 +161,25 @@ module.exports = class Engine
             this.currentScopeId--;
             this.treesCounter--;
             this.tree = this.trees[this.treesCounter];
-
-//            this.trees[this.treesCounter] = this.tree;
         }
+    }
+
+    addParametersToScope(parameters, signature, scope)
+    {
+        let parametersValues = parameters.map(elem => this.evaluateExpression(elem));
+
+        let parametersCounter = 0;
+        signature.forEach(function(appliedType) {
+            let identifiers = appliedType.identifiers;
+            identifiers.forEach(function(identifier) {
+                let variableName = identifier.symbol.value;
+                let typeId = appliedType.typeId;
+                let value = parametersValues[parametersCounter].value;
+                scope.addVariable(variableName, typeId);
+                scope.setValue(variableName, typeId, value);
+                parametersCounter++;
+            });
+        });
     }
 
     evaluateExpression(expression)
@@ -303,6 +324,8 @@ module.exports = class Engine
             let foundVariable = currentScope.getVariable(name);
 
             return new ScalarVariable(foundVariable.value, foundVariable.typeId);
+        } else {
+            return this.evaluateExpression(expression);
         }
     }
 
