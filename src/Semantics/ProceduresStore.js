@@ -1,6 +1,6 @@
-const Scope = require('./ProcedureItem.js');
+import { Scope } from './ProcedureItem';
 
-module.exports = class ProceduresStore
+export class ProceduresStore
 {
     constructor()
     {

@@ -1,9 +1,9 @@
-const TextPosition = require('./TextPosition.js');
-const ErrorsDescription = require('../Errors/ErrorsDescription.js');
-const Error = require('./Error.js');
-const fs = require('fs');
+import { TextPosition } from './TextPosition';
+import { ErrorsDescription } from '../Errors/ErrorsDescription';
+import { Error } from './Error';
+import fs from 'fs'
 
-module.exports = class FileIO
+export class FileIO
 {
     constructor(fileName, printer)
     {

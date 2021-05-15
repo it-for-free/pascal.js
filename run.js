@@ -1,8 +1,8 @@
-const FileIO = require('./src/IO/FileIO.js');
-const ConsoleOutput = require('./src/IO/ConsoleOutput.js');
-const LexicalAnalyzer = require('./src/LexicalAnalyzer/LexicalAnalyzer.js');
-const SyntaxAnalyzer = require('./src/SyntaxAnalyzer/SyntaxAnalyzer.js');
-const Engine = require('./src/Semantics/Engine.js');
+import { FileIO } from './src/IO/FileIO';
+import { ConsoleOutput } from './src/IO/ConsoleOutput';
+import { LexicalAnalyzer } from './src/LexicalAnalyzer/LexicalAnalyzer';
+import { SyntaxAnalyzer } from './src/SyntaxAnalyzer/SyntaxAnalyzer';
+import { Engine } from './src/Semantics/Engine';
 
 
 var fileIO = new FileIO('example.pas', new ConsoleOutput());

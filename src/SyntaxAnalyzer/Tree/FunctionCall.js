@@ -1,6 +1,6 @@
-const TreeNodeBase = require('./TreeNodeBase.js');
+import { TreeNodeBase } from './TreeNodeBase';
 
-module.exports = class FunctionCall extends TreeNodeBase
+export class FunctionCall extends TreeNodeBase
 {
     constructor(symbol, identifier, parameters = [])
     {

@@ -1,4 +1,4 @@
-module.exports = class TextPosition
+export class TextPosition
 {
     constructor(lineNumber = 0, charNumber = 0)
     {

@@ -1,44 +1,44 @@
-const ErrorsCodes = require('../Errors/ErrorsCodes.js');
-const SymbolsCodes = require('../LexicalAnalyzer/SymbolsCodes.js');
-const SymbolsDescription = require('../LexicalAnalyzer/SymbolsDescription.js');
-const Assignation = require('./Tree/Assignation.js');
-const TakeElemByKeys = require('./Tree/TakeElemByKeys.js');
-const GetByPointer = require('./Tree/GetByPointer.js');
-const TakeField = require('./Tree/TakeField.js');
-const Multiplication = require('./Tree/Multiplication.js');
-const Division = require('./Tree/Division.js');
-const Addition = require('./Tree/Addition.js');
-const Subtraction = require('./Tree/Subtraction.js');
-const Constant = require('./Tree/Constant.js');
-const Identifier = require('./Tree/Identifier.js');
-const FunctionCall = require('./Tree/FunctionCall.js');
-const ProcedureCall = require('./Tree/ProcedureCall.js');
-const SimpleVariablesType = require('./Tree/SimpleVariablesType.js');
-const VariablesDeclaration = require('./Tree/VariablesDeclaration.js');
-const CompoundOperator = require('./Tree/CompoundOperator.js');
-const Implication = require('./Tree/Implication.js');
-const IntegerDivision = require('./Tree/IntegerDivision.js');
-const Modulo = require('./Tree/Modulo.js');
-const LogicalAnd = require('./Tree/LogicalAnd.js');
-const LogicalOr = require('./Tree/LogicalOr.js');
-const UnaryMinus = require('./Tree/UnaryMinus.js');
-const Program = require('./Tree/Program.js');
-const Procedure = require('./Tree/Procedure.js');
-const Function = require('./Tree/Function.js');
-const In = require('./Tree/Relations/In.js');
-const Equal = require('./Tree/Relations/Equal.js');
-const NotEqual = require('./Tree/Relations/NotEqual.js');
-const Less = require('./Tree/Relations/Less.js');
-const Greater = require('./Tree/Relations/Greater.js');
-const GreaterOrEqual = require('./Tree/Relations/GreaterOrEqual.js');
-const LessOrEqual = require('./Tree/Relations/LessOrEqual.js');
-const FunctionTypeApplied = require('./Tree/ParametersList/FunctionTypeApplied.js');
-const ProcedureTypeApplied = require('./Tree/ParametersList/ProcedureTypeApplied.js');
-const SimpleTypeApplied = require('./Tree/ParametersList/SimpleTypeApplied.js');
-const TypesIds = require('../Semantics/Variables/TypesIds.js');
+import { ErrorsCodes } from '../Errors/ErrorsCodes';
+import { SymbolsCodes } from '../LexicalAnalyzer/SymbolsCodes';
+import { SymbolsDescription } from '../LexicalAnalyzer/SymbolsDescription';
+import { Assignation } from './Tree/Assignation';
+import { TakeElemByKeys } from './Tree/TakeElemByKeys';
+import { GetByPointer } from './Tree/GetByPointer';
+import { TakeField } from './Tree/TakeField';
+import { Multiplication } from './Tree/Multiplication';
+import { Division } from './Tree/Division';
+import { Addition } from './Tree/Addition';
+import { Subtraction } from './Tree/Subtraction';
+import { Constant } from './Tree/Constant';
+import { Identifier } from './Tree/Identifier';
+import { FunctionCall } from './Tree/FunctionCall';
+import { ProcedureCall } from './Tree/ProcedureCall';
+import { SimpleVariablesType } from './Tree/SimpleVariablesType';
+import { VariablesDeclaration } from './Tree/VariablesDeclaration';
+import { CompoundOperator } from './Tree/CompoundOperator';
+import { Implication } from './Tree/Implication';
+import { IntegerDivision } from './Tree/IntegerDivision';
+import { Modulo } from './Tree/Modulo';
+import { LogicalAnd } from './Tree/LogicalAnd';
+import { LogicalOr } from './Tree/LogicalOr';
+import { UnaryMinus } from './Tree/UnaryMinus';
+import { Program } from './Tree/Program';
+import { Procedure } from './Tree/Procedure';
+import { Function } from './Tree/Function';
+import { In } from './Tree/Relations/In';
+import { Equal } from './Tree/Relations/Equal';
+import { NotEqual } from './Tree/Relations/NotEqual';
+import { Less } from './Tree/Relations/Less';
+import { Greater } from './Tree/Relations/Greater';
+import { GreaterOrEqual } from './Tree/Relations/GreaterOrEqual';
+import { LessOrEqual } from './Tree/Relations/LessOrEqual';
+import { FunctionTypeApplied } from './Tree/ParametersList/FunctionTypeApplied';
+import { ProcedureTypeApplied } from './Tree/ParametersList/ProcedureTypeApplied';
+import { SimpleTypeApplied } from './Tree/ParametersList/SimpleTypeApplied';
+import { TypesIds } from '../Semantics/Variables/TypesIds';
 
 
-module.exports = class SyntaxAnalyzer
+export class SyntaxAnalyzer
 {
     constructor(lexicalAnalyzer)
     {

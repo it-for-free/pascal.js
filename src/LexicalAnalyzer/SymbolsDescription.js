@@ -1,6 +1,6 @@
-const SymbolsCodes = require('./SymbolsCodes.js');
+import { SymbolsCodes } from './SymbolsCodes';
 
-module.exports = class SymbolsDescription
+export class SymbolsDescription
 {
     constructor()
     {

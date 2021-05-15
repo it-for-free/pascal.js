@@ -1,6 +1,6 @@
-const ProcedureItem = require('../ProcedureItem.js');
+import { ProcedureItem } from '../ProcedureItem';
 
-module.exports = class WriteLn extends ProcedureItem
+export class WriteLn extends ProcedureItem
 {
     innerRun(scope)
     {

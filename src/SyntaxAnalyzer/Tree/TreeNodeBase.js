@@ -1,4 +1,4 @@
-module.exports = class TreeNodeBase
+export class TreeNodeBase
 {
     constructor(symbol)
     {

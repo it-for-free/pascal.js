@@ -1,13 +1,13 @@
-const SymbolsCodes = require('./SymbolsCodes.js');
-const KeyWords = require('./KeyWords.js');
-const Symbol = require('./Symbols/Symbol.js');
-const NmbFloat = require('./Symbols/NmbFloat.js');
-const NmbInt = require('./Symbols/NmbInt.js');
-const OneSymbol = require('./Symbols/OneSymbol.js');
-const StringConstant = require('./Symbols/StringConstant.js');
-const ErrorsCodes = require('../Errors/ErrorsCodes.js');
+import { SymbolsCodes } from './SymbolsCodes';
+import { KeyWords } from './KeyWords';
+import { Symbol } from './Symbols/Symbol';
+import { NmbFloat } from './Symbols/NmbFloat';
+import { NmbInt } from './Symbols/NmbInt';
+import { OneSymbol } from './Symbols/OneSymbol';
+import { StringConstant } from './Symbols/StringConstant';
+import { ErrorsCodes } from '../Errors/ErrorsCodes';
 
-module.exports = class LexicalAnalyzer
+export class LexicalAnalyzer
 {
     constructor(fileIO)
     {

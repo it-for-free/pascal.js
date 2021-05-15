@@ -1,6 +1,6 @@
-const ErrorsCodes = require('./ErrorsCodes.js');
+import { ErrorsCodes } from './ErrorsCodes';
 
-module.exports = class ErrorsDescription
+export class ErrorsDescription
 {
     constructor()
     {

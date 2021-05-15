@@ -1,5 +1,5 @@
 
-module.exports = class SignedConstant
+export class SignedConstant
 {
     constructor(value, sign)
     {

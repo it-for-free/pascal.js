@@ -1,4 +1,4 @@
-module.exports = {
+export const TypesIds = {
     INTEGER: 0,
     REAL: 1,
     CHAR: 2,

@@ -1,6 +1,6 @@
-const SymbolBase = require('./SymbolBase.js');
+import { SymbolBase } from './SymbolBase';
 
-module.exports = class Symbol extends SymbolBase
+export class Symbol extends SymbolBase
 {
     constructor(textPosition, symbolCode, stringValue)
     {

@@ -1,6 +1,6 @@
-const BinaryOperation = require('../BinaryOperation.js');
+import { BinaryOperation } from '../BinaryOperation';
 
-module.exports = class Less extends BinaryOperation
+export class Less extends BinaryOperation
 {
     constructor(symbol, left, right)
     {

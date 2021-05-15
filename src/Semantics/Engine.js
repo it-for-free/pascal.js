@@ -1,37 +1,37 @@
-const Scope = require('./Scope.js');
-const ScalarVariable = require('./Variables/ScalarVariable.js');
-const TypesIds = require('./Variables/TypesIds.js');
-const VariablesDeclaration = require('../SyntaxAnalyzer/Tree/VariablesDeclaration.js');
-const SimpleVariablesType = require('../SyntaxAnalyzer/Tree/SimpleVariablesType.js');
-const Identifier = require('../SyntaxAnalyzer/Tree/Identifier.js');
-const Assignation = require('../SyntaxAnalyzer/Tree/Assignation.js');
-const SymbolsCodes = require('../LexicalAnalyzer/SymbolsCodes.js');
-const Constant = require('../SyntaxAnalyzer/Tree/Constant.js');
-const NmbFloat = require('../LexicalAnalyzer/Symbols/NmbFloat.js');
-const NmbInt = require('../LexicalAnalyzer/Symbols/NmbInt.js');
-const OneSymbol = require('../LexicalAnalyzer/Symbols/OneSymbol.js');
-const Addition = require('../SyntaxAnalyzer/Tree/Addition.js');
-const Subtraction = require('../SyntaxAnalyzer/Tree/Subtraction.js');
-const Multiplication = require('../SyntaxAnalyzer/Tree/Multiplication.js');
-const Division = require('../SyntaxAnalyzer/Tree/Division.js');
-const IntegerDivision = require('../SyntaxAnalyzer/Tree/IntegerDivision.js');
-const Modulo = require('../SyntaxAnalyzer/Tree/Modulo.js');
-const LogicalAnd = require('../SyntaxAnalyzer/Tree/LogicalAnd.js');
-const LogicalOr = require('../SyntaxAnalyzer/Tree/LogicalOr.js');
-const UnaryMinus = require('../SyntaxAnalyzer/Tree/UnaryMinus.js');
-const CompoundOperator = require('../SyntaxAnalyzer/Tree/CompoundOperator.js');
-const Implication = require('../SyntaxAnalyzer/Tree/Implication.js');
-const ProcedureCall = require('../SyntaxAnalyzer/Tree/ProcedureCall.js');
-const In = require('../SyntaxAnalyzer/Tree/Relations/In.js');
-const Equal = require('../SyntaxAnalyzer/Tree/Relations/Equal.js');
-const NotEqual = require('../SyntaxAnalyzer/Tree/Relations/NotEqual.js');
-const Less = require('../SyntaxAnalyzer/Tree/Relations/Less.js');
-const Greater = require('../SyntaxAnalyzer/Tree/Relations/Greater.js');
-const GreaterOrEqual = require('../SyntaxAnalyzer/Tree/Relations/GreaterOrEqual.js');
-const LessOrEqual = require('../SyntaxAnalyzer/Tree/Relations/LessOrEqual.js');
+import { Scope } from './Scope';
+import { ScalarVariable } from './Variables/ScalarVariable';
+import { TypesIds } from './Variables/TypesIds';
+import { VariablesDeclaration } from '../SyntaxAnalyzer/Tree/VariablesDeclaration';
+import { SimpleVariablesType } from '../SyntaxAnalyzer/Tree/SimpleVariablesType';
+import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
+import { Assignation } from '../SyntaxAnalyzer/Tree/Assignation';
+import { SymbolsCodes } from '../LexicalAnalyzer/SymbolsCodes';
+import { Constant } from '../SyntaxAnalyzer/Tree/Constant';
+import { NmbFloat } from '../LexicalAnalyzer/Symbols/NmbFloat';
+import { NmbInt } from '../LexicalAnalyzer/Symbols/NmbInt';
+import { OneSymbol } from '../LexicalAnalyzer/Symbols/OneSymbol';
+import { Addition } from '../SyntaxAnalyzer/Tree/Addition';
+import { Subtraction } from '../SyntaxAnalyzer/Tree/Subtraction';
+import { Multiplication } from '../SyntaxAnalyzer/Tree/Multiplication';
+import { Division } from '../SyntaxAnalyzer/Tree/Division';
+import { IntegerDivision } from '../SyntaxAnalyzer/Tree/IntegerDivision';
+import { Modulo } from '../SyntaxAnalyzer/Tree/Modulo';
+import { LogicalAnd } from '../SyntaxAnalyzer/Tree/LogicalAnd';
+import { LogicalOr } from '../SyntaxAnalyzer/Tree/LogicalOr';
+import { UnaryMinus } from '../SyntaxAnalyzer/Tree/UnaryMinus';
+import { CompoundOperator } from '../SyntaxAnalyzer/Tree/CompoundOperator';
+import { Implication } from '../SyntaxAnalyzer/Tree/Implication';
+import { ProcedureCall } from '../SyntaxAnalyzer/Tree/ProcedureCall';
+import { In } from '../SyntaxAnalyzer/Tree/Relations/In';
+import { Equal } from '../SyntaxAnalyzer/Tree/Relations/Equal';
+import { NotEqual } from '../SyntaxAnalyzer/Tree/Relations/NotEqual';
+import { Less } from '../SyntaxAnalyzer/Tree/Relations/Less';
+import { Greater } from '../SyntaxAnalyzer/Tree/Relations/Greater';
+import { GreaterOrEqual } from '../SyntaxAnalyzer/Tree/Relations/GreaterOrEqual';
+import { LessOrEqual } from '../SyntaxAnalyzer/Tree/Relations/LessOrEqual';
 
 
-module.exports = class Engine
+export class Engine
 {
     constructor(tree)
     {

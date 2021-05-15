@@ -1,4 +1,4 @@
-module.exports = class ConsoleOutput
+export class ConsoleOutput
 {
     constructor()
     {

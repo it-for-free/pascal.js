@@ -1,6 +1,6 @@
-const ProgramBase = require('./ProgramBase.js');
+import { ProgramBase } from './ProgramBase';
 
-module.exports = class Procedure extends ProgramBase
+export class Procedure extends ProgramBase
 {
     constructor(symbol)
     {

@@ -1,6 +1,6 @@
-const BinaryOperation = require('./BinaryOperation.js');
+import { BinaryOperation } from './BinaryOperation';
 
-module.exports = class LogicalOr extends BinaryOperation
+export class LogicalOr extends BinaryOperation
 {
     constructor(symbol, left, right)
     {

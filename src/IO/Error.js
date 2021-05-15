@@ -1,4 +1,4 @@
-module.exports = class Error
+export class Error
 {
     constructor(errorCode, errorText, textPosition)
     {

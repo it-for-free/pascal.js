@@ -1,5 +1,5 @@
 
-module.exports = class ScalarVariable
+export class ScalarVariable
 {
     constructor(value, typeId)
     {

@@ -1,4 +1,4 @@
-module.exports = class SymbolBase
+export class SymbolBase
 {
     constructor(textPosition, symbolCode, stringValue, value)
     {

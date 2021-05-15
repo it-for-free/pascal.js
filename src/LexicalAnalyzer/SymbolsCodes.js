@@ -1,4 +1,4 @@
-module.exports = {
+export const SymbolsCodes = {
     star            :21,   /* * */
     slash           :60,   /* / */
     equal           :16,   /* = */

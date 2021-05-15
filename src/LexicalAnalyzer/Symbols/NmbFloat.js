@@ -1,6 +1,6 @@
-const SymbolBase = require('./SymbolBase.js');
+import { SymbolBase } from './SymbolBase';
 
-module.exports = class NmbFloat extends SymbolBase
+export class NmbFloat extends SymbolBase
 {
     constructor(textPosition, symbolCode, stringValue)
     {

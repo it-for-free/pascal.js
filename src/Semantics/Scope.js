@@ -1,8 +1,8 @@
-const TypesIds = require('./Variables/TypesIds.js');
-const ScalarVariable = require('./Variables/ScalarVariable.js');
+import { TypesIds } from './Variables/TypesIds';
+import { ScalarVariable } from './Variables/ScalarVariable';
 
 
-module.exports = class Scope
+export class Scope
 {
     constructor(parentScope = null)
     {
