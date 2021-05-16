@@ -10,6 +10,7 @@ import { Constant } from '../SyntaxAnalyzer/Tree/Constant';
 import { NmbFloat } from '../LexicalAnalyzer/Symbols/NmbFloat';
 import { NmbInt } from '../LexicalAnalyzer/Symbols/NmbInt';
 import { OneSymbol } from '../LexicalAnalyzer/Symbols/OneSymbol';
+import { StringConstant } from '../LexicalAnalyzer/Symbols/StringConstant';
 import { Addition } from '../SyntaxAnalyzer/Tree/Addition';
 import { Subtraction } from '../SyntaxAnalyzer/Tree/Subtraction';
 import { Multiplication } from '../SyntaxAnalyzer/Tree/Multiplication';
@@ -29,6 +30,7 @@ import { Less } from '../SyntaxAnalyzer/Tree/Relations/Less';
 import { Greater } from '../SyntaxAnalyzer/Tree/Relations/Greater';
 import { GreaterOrEqual } from '../SyntaxAnalyzer/Tree/Relations/GreaterOrEqual';
 import { LessOrEqual } from '../SyntaxAnalyzer/Tree/Relations/LessOrEqual';
+import { ProceduresStore } from './ProceduresStore';
 
 
 export class Engine
@@ -41,6 +43,7 @@ export class Engine
         this.scopes = [];
         this.currentScopeId = 0;
         this.scopes[this.currentScopeId] = new Scope();
+        this.procedureStore = new ProceduresStore();
     }
 
     getCurrentScope()
@@ -62,7 +65,7 @@ export class Engine
             );
         }
 
-        console.dir(this.scopes, { depth: null });
+//        console.dir(this.scopes, { depth: null });
     }
 
     setVariables()
@@ -146,7 +149,15 @@ export class Engine
         } else if (sentence instanceof ProcedureCall) {
 
             let procedureName = sentence.identifier.symbol.value;
-            let procedure = this.tree.procedures[procedureName];
+
+            let isDeclaredProcedure = this.tree.procedures.hasOwnProperty(procedureName);
+            let procedure = isDeclaredProcedure ?
+                this.tree.procedures[procedureName]:
+                this.procedureStore.getProcedure(procedureName);
+
+            if (procedure === null) {
+                // error procedure ${procedureName} not found
+            }
 
             let scope = new Scope();
             this.addParametersToScope(sentence.parameters, procedure.signature, scope);
@@ -156,6 +167,12 @@ export class Engine
             this.scopes[this.currentScopeId] = scope;
 
             this.run();
+
+            if (!isDeclaredProcedure &&
+                typeof procedure.innerRun === 'function' ) {
+                procedure.innerRun(scope);
+            }
+
             delete this.scopes[this.currentScopeId];
 
             this.currentScopeId--;
@@ -167,19 +184,23 @@ export class Engine
     addParametersToScope(parameters, signature, scope)
     {
         let parametersValues = parameters.map(elem => this.evaluateExpression(elem));
-
-        let parametersCounter = 0;
-        signature.forEach(function(appliedType) {
-            let identifiers = appliedType.identifiers;
-            identifiers.forEach(function(identifier) {
-                let variableName = identifier.symbol.value;
-                let typeId = appliedType.typeId;
-                let value = parametersValues[parametersCounter].value;
-                scope.addVariable(variableName, typeId);
-                scope.setValue(variableName, typeId, value);
-                parametersCounter++;
+        if (signature.length === 0) {
+            scope.addVariable('parametersList', TypesIds.ARRAY);
+            scope.setValue('parametersList', TypesIds.ARRAY, parametersValues);
+        } else {
+            let parametersCounter = 0;
+            signature.forEach(function(appliedType) {
+                let identifiers = appliedType.identifiers;
+                identifiers.forEach(function(identifier) {
+                    let variableName = identifier.symbol.value;
+                    let typeId = appliedType.typeId;
+                    let value = parametersValues[parametersCounter].value;
+                    scope.addVariable(variableName, typeId);
+                    scope.setValue(variableName, typeId, value);
+                    parametersCounter++;
+                });
             });
-        });
+        }
     }
 
     evaluateExpression(expression)
@@ -339,6 +360,8 @@ export class Engine
                 return TypesIds.INTEGER;
             } else if (symbol instanceof OneSymbol) {
                 return TypesIds.CHAR;
+            } else if (symbol instanceof StringConstant) {
+                return TypesIds.STRING;
             }
         }
 

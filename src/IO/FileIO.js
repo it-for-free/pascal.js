@@ -35,7 +35,7 @@ export class FileIO
             return null;
         } else {
             if (this.positionNow.charNumber === this.currentLine.length) {
-                this.printer.listLine(this.currentLine.join(''), this.positionNow.lineNumber);
+//                this.printer.listLine(this.currentLine.join(''), this.positionNow.lineNumber);
                 if (this.currentLineErrors.length > 0) {
                     this.printer.listErrors(this.currentLineErrors);
                 }

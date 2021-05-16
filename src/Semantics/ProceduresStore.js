@@ -1,23 +1,26 @@
-import { Scope } from './ProcedureItem';
+import { ProcedureItem } from './ProcedureItem';
+import { WriteLn } from './Procedures/WriteLn.js';
 
 export class ProceduresStore
 {
     constructor()
     {
-        this.items = {};
+        this.items = {
+            writeln: new WriteLn()
+        };
     }
 
-    addProcedure(name, vars = [], parameters = [], sentences = [])
+    addProcedure(name, procedure)
     {
-        if (this.items.hasOwnProperty(name.toLowerCase())) {
-            // already declared
-        } else {
-            this.items[name] = new ProcedureItem(vars, parameters, sentences);
-        }
+        this.items[name.toLowerCase()] = procedure;
     }
 
-    getVariable(name)
+    getProcedure(name)
     {
-        this.items.hasOwnProperty(name.toLowerCase());
+        let lowerCaseName = name.toLowerCase();
+
+        return this.items.hasOwnProperty(lowerCaseName) ?
+            this.items[lowerCaseName] :
+            null;
     }
 };

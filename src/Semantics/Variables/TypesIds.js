@@ -5,5 +5,6 @@ export const TypesIds = {
     ARRAY: 3,
     RECORD: 4,
     ENUM: 5,
-    BOOLEAN: 6
+    BOOLEAN: 6,
+    STRING: 7
 };

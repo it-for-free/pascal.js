@@ -1,6 +1,6 @@
 import { ProcedureItem } from '../ProcedureItem';
 
-export class WriteLn extends ProcedureItem
+export class Write extends ProcedureItem
 {
     constructor()
     {
@@ -11,6 +11,6 @@ export class WriteLn extends ProcedureItem
     {
         let parametersList = scope.getVariable('parametersList');
 
-        console.log(parametersList.value.map(elem => elem.value).join(' '));
+        process.stdout.write(parametersList.value.map(elem => elem.value).join(' '));
     }
 };
