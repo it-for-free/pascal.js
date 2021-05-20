@@ -587,26 +587,37 @@ export class SyntaxAnalyzer
     scanTerm()
     {
         let multiplier = this.scanMultiplier();
+        let symbolCode = null;
 
-        switch (this.symbol.symbolCode) {
-            case SymbolsCodes.star:
-                this.nextSym();
-                return new Multiplication(this.symbol, multiplier, this.scanMultiplier());
-            case SymbolsCodes.slash:
-                this.nextSym();
-                return new Division(this.symbol, multiplier, this.scanMultiplier());
-            case SymbolsCodes.divSy:
-                this.nextSym();
-                return new IntegerDivision(this.symbol, multiplier, this.scanMultiplier());
-            case SymbolsCodes.modSy:
-                this.nextSym();
-                return new Modulo(this.symbol, multiplier, this.scanMultiplier());
-            case SymbolsCodes.andSy:
-                this.nextSym();
-                return new LogicalAnd(this.symbol, multiplier, this.scanMultiplier());
-            default:
-                return multiplier;
+        while ([SymbolsCodes.star,
+                SymbolsCodes.slash,
+                SymbolsCodes.divSy,
+                SymbolsCodes.modSy,
+                SymbolsCodes.andSy].includes(this.symbol.symbolCode)) {
+
+            symbolCode = this.symbol.symbolCode;
+
+            this.nextSym();
+
+            switch (symbolCode) {
+                case SymbolsCodes.star:
+                    multiplier = new Multiplication(this.symbol, multiplier, this.scanMultiplier());
+                    break;
+                case SymbolsCodes.slash:
+                    multiplier = new Division(this.symbol, multiplier, this.scanMultiplier());
+                    break;
+                case SymbolsCodes.divSy:
+                    multiplier = new IntegerDivision(this.symbol, multiplier, this.scanMultiplier());
+                    break;
+                case SymbolsCodes.modSy:
+                    multiplier = new Modulo(this.symbol, multiplier, this.scanMultiplier());
+                    break;
+                case SymbolsCodes.andSy:
+                    multiplier = new LogicalAnd(this.symbol, multiplier, this.scanMultiplier());
+            }
         }
+
+        return multiplier;
     }
 
     /** Синтаксическая диаграмма "множитель" */
