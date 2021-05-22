@@ -1,2 +1,9 @@
+
+# src:
+/node_modules/*
+
+#ide:
 /nbproject/*
+
+#dev:
 example.pas

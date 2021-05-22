@@ -1,3 +1,10 @@
 {
-    "type": "module" 
+    "type": "module",
+    "devDependencies": {
+        "jest": "^26.6.3"
+    },
+    "scripts": {
+        "test": "jest __tests__",
+        "testme": "jest __tests__/demo/first.test.js"
+    }
 }
