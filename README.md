@@ -16,7 +16,7 @@ node --es-module-specifier-resolution=node run.js
 npm ci
 ```
 ## Тесты
-Устанавливаем зависимости:
+Запуск всех тестов:
 
 ```shell
 npm test
