@@ -13,7 +13,7 @@ import { Constant } from './Tree/Constant';
 import { Identifier } from './Tree/Identifier';
 import { FunctionCall } from './Tree/FunctionCall';
 import { ProcedureCall } from './Tree/ProcedureCall';
-import { SimpleVariablesType } from './Tree/SimpleVariablesType';
+import { SimpleVariablesType } from './Tree/Types/SimpleVariablesType';
 import { VariablesDeclaration } from './Tree/VariablesDeclaration';
 import { CompoundOperator } from './Tree/CompoundOperator';
 import { Implication } from './Tree/Implication';
@@ -36,6 +36,8 @@ import { FunctionTypeApplied } from './Tree/ParametersList/FunctionTypeApplied';
 import { ProcedureTypeApplied } from './Tree/ParametersList/ProcedureTypeApplied';
 import { SimpleTypeApplied } from './Tree/ParametersList/SimpleTypeApplied';
 import { TypesIds } from '../Semantics/Variables/TypesIds';
+import { TypesStore } from './TypesStore';
+import { EnumType } from './Tree/Types/EnumType';
 
 
 export class SyntaxAnalyzer
@@ -93,6 +95,7 @@ export class SyntaxAnalyzer
     {
         if (this.symbol.symbolCode === SymbolsCodes.programSy) {
             this.nextSym();
+            this.tree.name = this.symbol.stringValue;
             this.accept(SymbolsCodes.ident);
             this.accept(SymbolsCodes.semicolon);
         }
@@ -122,7 +125,18 @@ export class SyntaxAnalyzer
 
     typePart()
     {
-
+        if (this.symbol.symbolCode === SymbolsCodes.typeSy) {
+            this.tree.types = new TypesStore();
+            this.nextSym();
+            do {
+                let identSymbol = this.symbol;
+                this.accept(SymbolsCodes.ident);
+                this.accept(SymbolsCodes.equal);
+                let type = this.scanType();
+                this.tree.types.addType(identSymbol.stringValue, type);
+                this.accept(SymbolsCodes.semicolon);
+            } while (this.symbol.symbolCode === SymbolsCodes.ident)
+        }
     }
 
     varPart()
@@ -177,9 +191,17 @@ export class SyntaxAnalyzer
             this.nextSym();
 
             return new SimpleVariablesType(typeSymbol, false)
-            this.nextSym();
-        } else {
-            this.accept(SymbolsCodes.ident);
+        } else if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
+            let enumType = new EnumType(this.symbol);
+            let ident = null;
+            do {
+                this.nextSym();
+                ident = new Identifier(this.symbol);
+                enumType.items.push(ident);
+                this.accept(SymbolsCodes.ident);
+            } while (this.symbol.symbolCode === SymbolsCodes.comma )
+            this.accept(SymbolsCodes.rightPar);
+            return enumType;
         }
     }
 

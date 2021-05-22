@@ -10,5 +10,6 @@ export class ProgramBase extends TreeNodeBase
         this.procedures = {};
         this.functions = {};
         this.sentences = [];
+        this.types = {};
     }
 };
