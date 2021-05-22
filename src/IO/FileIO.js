@@ -31,7 +31,7 @@ export class FileIO
 
     nextCh()
     {
-        if (this.endOfFile) {
+        if (this.endOfFile && this.positionNow.charNumber >= this.currentLine.length) {
             return null;
         } else {
             if (this.positionNow.charNumber === this.currentLine.length) {
