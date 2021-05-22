@@ -1,4 +1,4 @@
-import { TreeNodeBase } from './TreeNodeBase';
+import { TreeNodeBase } from '../TreeNodeBase';
 
 export class SimpleVariablesType extends TreeNodeBase
 {
@@ -8,4 +8,3 @@ export class SimpleVariablesType extends TreeNodeBase
         this.isPointer = isPointer;
     }
 }
-

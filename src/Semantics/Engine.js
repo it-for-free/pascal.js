@@ -2,7 +2,7 @@ import { Scope } from './Scope';
 import { ScalarVariable } from './Variables/ScalarVariable';
 import { TypesIds } from './Variables/TypesIds';
 import { VariablesDeclaration } from '../SyntaxAnalyzer/Tree/VariablesDeclaration';
-import { SimpleVariablesType } from '../SyntaxAnalyzer/Tree/SimpleVariablesType';
+import { SimpleVariablesType } from '../SyntaxAnalyzer/Tree/Types/SimpleVariablesType';
 import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
 import { Assignation } from '../SyntaxAnalyzer/Tree/Assignation';
 import { SymbolsCodes } from '../LexicalAnalyzer/SymbolsCodes';
