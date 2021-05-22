@@ -1,8 +1,6 @@
 # pascal.js
 pascal interpreter in javascript
 
-
-
 ## run
 
 Запуск:
@@ -16,4 +14,10 @@ node --es-module-specifier-resolution=node run.js
 
 ```shell
 npm ci
+```
+## Тесты
+Устанавливаем зависимости:
+
+```shell
+npm test
 ```
