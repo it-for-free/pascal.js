@@ -38,6 +38,10 @@ import { SimpleTypeApplied } from './Tree/ParametersList/SimpleTypeApplied';
 import { TypesIds } from '../Semantics/Variables/TypesIds';
 import { TypesStore } from './TypesStore';
 import { EnumType } from './Tree/Types/EnumType';
+import { WhileCycle } from './Tree/Loops/WhileCycle';
+import { RepeatCycle } from './Tree/Loops/RepeatCycle';
+import { ForCycle } from './Tree/Loops/ForCycle';
+import { NmbInt } from './../LexicalAnalyzer/Symbols/NmbInt';
 
 
 export class SyntaxAnalyzer
@@ -469,6 +473,65 @@ export class SyntaxAnalyzer
             }
 
             return new Implication(ifSymbol, condition, left, right);
+        } else if (this.symbol.symbolCode === SymbolsCodes.whileSy) {
+            let whileSymbol = this.symbol;
+            this.nextSym();
+            let condition = this.scanExpression();
+            this.accept(SymbolsCodes.doSy);
+            let body = this.scanSentence();
+
+            return new WhileCycle(whileSymbol, condition, body);
+        } else if (this.symbol.symbolCode === SymbolsCodes.repeatSy) {
+            let repeatSymbol = this.symbol;
+            this.nextSym();
+            let body = this.scanSentence();
+            this.accept(SymbolsCodes.untilSy);
+            let condition = this.scanExpression();
+
+            return new RepeatCycle(repeatSymbol, condition, body);
+        } else if (this.symbol.symbolCode === SymbolsCodes.forSy) {
+            let forSymbol = this.symbol;
+            this.nextSym();
+            let identSymbol = this.symbol;
+            this.accept(SymbolsCodes.ident);
+            let variable = new Identifier(identSymbol);
+            let assignSymbol = this.symbol;
+            this.accept(SymbolsCodes.assign);
+
+            let init = new Assignation(assignSymbol, variable, this.scanSimpleExpression());
+            let countDown = false;
+            let countSymbol = this.symbol;
+            switch (this.symbol.symbolCode) {
+                case SymbolsCodes.downtoSy:
+                    countDown = true;
+                    break;
+                case SymbolsCodes.toSy:
+                    countDown = false;
+                    break;
+                default:
+                    let errorText = `Symbols 'to' or 'downto' expected but '${this.symbol.stringValue}' found.`;
+                    this.addError(ErrorsCodes.inadmissibleSymbol, errorText, this.symbol);
+            }
+
+            this.nextSym();
+
+            let condition = countDown ?
+                new GreaterOrEqual(this.symbol, variable, this.scanSimpleExpression()) :
+                new LessOrEqual(this.symbol, variable, this.scanSimpleExpression());
+
+            this.accept(SymbolsCodes.doSy);
+            let body = this.scanSentence();
+
+            let unityConstant = new Constant(new NmbInt(countSymbol.textPosition, SymbolsCodes.intC, '1'));
+            let operation = new Assignation(
+                assignSymbol,
+                variable,
+                countDown ?
+                new Subtraction(countSymbol, variable, unityConstant) :
+                new Addition(countSymbol, variable, unityConstant)
+            );
+
+            return new ForCycle(forSymbol, init, condition, operation, body);
         }
     }
 
@@ -744,5 +807,10 @@ export class SyntaxAnalyzer
         }
 
         return constant;
+    }
+
+    addError(errorCode, errorText = null, symbol)
+    {
+        this.lexicalAnalyzer.fileIO.addError(errorCode, errorText, symbol.textPosition);
     }
 };

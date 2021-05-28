@@ -22,6 +22,9 @@ import { LogicalOr } from '../SyntaxAnalyzer/Tree/LogicalOr';
 import { UnaryMinus } from '../SyntaxAnalyzer/Tree/UnaryMinus';
 import { CompoundOperator } from '../SyntaxAnalyzer/Tree/CompoundOperator';
 import { Implication } from '../SyntaxAnalyzer/Tree/Implication';
+import { WhileCycle } from '../SyntaxAnalyzer/Tree/Loops/WhileCycle';
+import { RepeatCycle } from '../SyntaxAnalyzer/Tree/Loops/RepeatCycle';
+import { ForCycle } from '../SyntaxAnalyzer/Tree/Loops/ForCycle';
 import { ProcedureCall } from '../SyntaxAnalyzer/Tree/ProcedureCall';
 import { In } from '../SyntaxAnalyzer/Tree/Relations/In';
 import { Equal } from '../SyntaxAnalyzer/Tree/Relations/Equal';
@@ -31,6 +34,7 @@ import { Greater } from '../SyntaxAnalyzer/Tree/Relations/Greater';
 import { GreaterOrEqual } from '../SyntaxAnalyzer/Tree/Relations/GreaterOrEqual';
 import { LessOrEqual } from '../SyntaxAnalyzer/Tree/Relations/LessOrEqual';
 import { ProceduresStore } from './ProceduresStore';
+import { RuntimeError } from '../Errors/RuntimeError';
 
 
 export class Engine
@@ -178,6 +182,20 @@ export class Engine
             this.currentScopeId--;
             this.treesCounter--;
             this.tree = this.trees[this.treesCounter];
+        } else if (sentence instanceof WhileCycle) {
+            while (this.evaluateExpression(sentence.condition).value === true) {
+                this.evaluateSentence(sentence.body);
+            }
+        } else if (sentence instanceof RepeatCycle) {
+            do {
+                this.evaluateSentence(sentence.body);
+            } while (this.evaluateExpression(sentence.condition).value !== true)
+        } else if (sentence instanceof ForCycle) {
+            this.evaluateSentence(sentence.init);
+            while (this.evaluateExpression(sentence.condition).value === true) {
+                this.evaluateSentence(sentence.body);
+                this.evaluateSentence(sentence.operation);
+            }
         }
     }
 

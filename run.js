@@ -3,6 +3,7 @@ import { ConsoleOutput } from './src/IO/ConsoleOutput';
 import { LexicalAnalyzer } from './src/LexicalAnalyzer/LexicalAnalyzer';
 import { SyntaxAnalyzer } from './src/SyntaxAnalyzer/SyntaxAnalyzer';
 import { Engine } from './src/Semantics/Engine';
+import { RuntimeError } from './src/Errors/RuntimeError';
 
 
 var fileIO = new FileIO('example.pas', new ConsoleOutput());
@@ -16,8 +17,14 @@ var symbol = null;
 //}
 
 var syntaxAnalyzer = new SyntaxAnalyzer(lexicalAnalyzer);
-var tree = syntaxAnalyzer.analyze();
-//console.dir(tree, { depth: null });
+try {
+    var tree = syntaxAnalyzer.analyze();
+    //console.dir(tree, { depth: null });
 
-var engine = new Engine(tree);
-engine.run();
+    var engine = new Engine(tree);
+    engine.run();
+} catch (e) {
+    if (e instanceof RuntimeError) {
+        fileIO.printListing(e);
+    }
+}

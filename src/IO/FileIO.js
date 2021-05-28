@@ -1,6 +1,6 @@
 import { TextPosition } from './TextPosition';
 import { ErrorsDescription } from '../Errors/ErrorsDescription';
-import { Error } from './Error';
+import { RuntimeError } from '../Errors/RuntimeError';
 import fs from 'fs'
 
 export class FileIO
@@ -62,6 +62,21 @@ export class FileIO
         let message = this.errorsDescription.getErrorTextByCode(errorCode) +
                 (errorText === null ? '' : ('. ' + errorText));
         let currentPosition = textPosition === null ? this.getCurrentPosition() : textPosition;
-        this.currentLineErrors.push(new Error(errorCode, message, currentPosition));
+        throw new RuntimeError(errorCode, message, currentPosition);
+    }
+
+    printListing(error = null)
+    {
+        let lineNumber = error.textPosition.lineNumber;
+
+        for (let i = 0; i <= lineNumber; i++) {
+            this.printer.listLine(this.lines[i], i);
+        }
+
+        this.printer.listError(error);
+
+        for (let i = lineNumber + 1; i <= this.lines.length - 1; i++) {
+            this.printer.listLine(this.lines[i], i);
+        }
     }
 }
