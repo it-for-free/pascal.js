@@ -15,15 +15,20 @@ export class PascalJs
     constructor() {}
     
     runFile(filePath) {
-        var fileIO = new FileIO(filePath,
-            new ConsoleOutput()
-        );
-        var lexicalAnalyzer = new LexicalAnalyzer(fileIO);
-        var syntaxAnalyzer = new SyntaxAnalyzer(lexicalAnalyzer);
-        var tree = syntaxAnalyzer.analyze();
-        var engine = new Engine(tree);
-        engine.run();
-    
+
+        // try {
+            var fileIO = new FileIO(filePath,
+                new ConsoleOutput()
+            );
+            var lexicalAnalyzer = new LexicalAnalyzer(fileIO);
+            var syntaxAnalyzer = new SyntaxAnalyzer(lexicalAnalyzer);
+            var tree = syntaxAnalyzer.analyze();
+            var engine = new Engine(tree);
+            engine.run();
+        // } catch (e) {
+        //     throw new Error(e.message);
+        // }
+
         this.engine = engine; 
         return engine;
     }

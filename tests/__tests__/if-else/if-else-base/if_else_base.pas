@@ -1,5 +1,5 @@
-ar a, b, c, d,  max2, max3, max4: integer; // секция объявления переменных
-begin  // начало тела программы
+var a, b, c, d,  max2, max3, max4: integer; 
+begin  
     a := 7;
     b := 19;
     c := 10;
