@@ -9,6 +9,7 @@ export class ErrorsDescription
             [2, 'Name expected'],
             [ErrorsCodes.inadmissibleSymbol, 'Inadmissible Symbol'],
             [ErrorsCodes.forbiddenCharacter, 'Forbidden character'],
+            [ErrorsCodes.nameNotDescribed, 'Name is not described'],
         ]);
     }
 

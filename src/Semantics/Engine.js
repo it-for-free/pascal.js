@@ -26,6 +26,7 @@ import { WhileCycle } from '../SyntaxAnalyzer/Tree/Loops/WhileCycle';
 import { RepeatCycle } from '../SyntaxAnalyzer/Tree/Loops/RepeatCycle';
 import { ForCycle } from '../SyntaxAnalyzer/Tree/Loops/ForCycle';
 import { ProcedureCall } from '../SyntaxAnalyzer/Tree/ProcedureCall';
+import { FunctionCall } from '../SyntaxAnalyzer/Tree/FunctionCall';
 import { In } from '../SyntaxAnalyzer/Tree/Relations/In';
 import { Equal } from '../SyntaxAnalyzer/Tree/Relations/Equal';
 import { NotEqual } from '../SyntaxAnalyzer/Tree/Relations/NotEqual';
@@ -34,8 +35,10 @@ import { Greater } from '../SyntaxAnalyzer/Tree/Relations/Greater';
 import { GreaterOrEqual } from '../SyntaxAnalyzer/Tree/Relations/GreaterOrEqual';
 import { LessOrEqual } from '../SyntaxAnalyzer/Tree/Relations/LessOrEqual';
 import { ProceduresStore } from './ProceduresStore';
+import { FunctionsStore } from './FunctionsStore';
 import { RuntimeError } from '../Errors/RuntimeError';
-
+import { ErrorsDescription } from '../Errors/ErrorsDescription';
+import { ErrorsCodes } from '../Errors/ErrorsCodes';
 
 export class Engine
 {
@@ -47,7 +50,9 @@ export class Engine
         this.scopes = [];
         this.currentScopeId = 0;
         this.scopes[this.currentScopeId] = new Scope();
-        this.procedureStore = new ProceduresStore();
+        this.proceduresStore = new ProceduresStore();
+        this.functionsStore = new FunctionsStore();
+        this.errorsDescription = new ErrorsDescription();
     }
 
     getCurrentScope()
@@ -157,10 +162,10 @@ export class Engine
             let isDeclaredProcedure = this.tree.procedures.hasOwnProperty(procedureName);
             let procedure = isDeclaredProcedure ?
                 this.tree.procedures[procedureName]:
-                this.procedureStore.getProcedure(procedureName);
+                this.proceduresStore.getProcedure(procedureName);
 
             if (procedure === null) {
-                // error procedure ${procedureName} not found
+                this.addError(ErrorsCodes.nameNotDescribed, `Procedure '${procedureName}' is not declared!`, sentence.identifier.symbol.textPosition);
             }
 
             let scope = new Scope();
@@ -363,6 +368,42 @@ export class Engine
             let foundVariable = currentScope.getVariable(name);
 
             return new ScalarVariable(foundVariable.value, foundVariable.typeId);
+        } else if (expression instanceof FunctionCall) {
+
+            let functionName = expression.identifier.symbol.value;
+            let isDeclaredFunction = this.tree.functions.hasOwnProperty(functionName);
+            let calledFunction = isDeclaredFunction ?
+                this.tree.functions[functionName]:
+                this.functionsStore.getFunction(functionName);
+
+            if (calledFunction === null) {
+                this.addError(ErrorsCodes.nameNotDescribed, `Function '${functionName}' is not declared!`, expression.identifier.symbol.textPosition);
+            }
+
+            let scope = new Scope();
+
+            scope.addVariable(functionName, calledFunction.returnType.typeId);
+            this.addParametersToScope(expression.parameters, calledFunction.signature, scope);
+            this.treesCounter++;
+            this.tree = calledFunction;
+            this.currentScopeId++;
+            this.scopes[this.currentScopeId] = scope;
+
+            this.run();
+
+            if (!isDeclaredFunction &&
+                typeof calledFunction.innerRun === 'function' ) {
+                calledFunction.innerRun(scope);
+            }
+
+            let result = scope.getVariable(functionName);
+            delete this.scopes[this.currentScopeId];
+
+            this.currentScopeId--;
+            this.treesCounter--;
+            this.tree = this.trees[this.treesCounter];
+
+            return result;
         } else {
             return this.evaluateExpression(expression);
         }
@@ -384,5 +425,13 @@ export class Engine
         }
 
         return null;
+    }
+
+    addError(errorCode, errorText = null, textPosition = null)
+    {
+        let message = this.errorsDescription.getErrorTextByCode(errorCode) +
+                (errorText === null ? '' : ('. ' + errorText));
+        let currentPosition = textPosition === null ? this.getCurrentPosition() : textPosition;
+        throw new RuntimeError(errorCode, message, currentPosition);
     }
 };

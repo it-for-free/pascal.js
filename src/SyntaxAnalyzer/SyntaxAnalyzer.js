@@ -248,7 +248,25 @@ export class SyntaxAnalyzer
 
     scanFunction()
     {
+        let functionSymbol = this.symbol;
         this.accept(SymbolsCodes.functionSy);
+        this.treesCounter++;
+        this.tree = new Function(functionSymbol);
+        this.trees[this.treesCounter] = this.tree;
+        this.tree.name = new Identifier(this.symbol);
+        let functionName = this.tree.name.symbol.value;
+        this.accept(SymbolsCodes.ident);
+        this.tree.signature = this.scanParametersList();
+        this.accept(SymbolsCodes.colon);
+        this.tree.returnType = this.scanReturnType();
+
+        this.accept(SymbolsCodes.semicolon);
+        this.scanBlock();
+        this.accept(SymbolsCodes.semicolon);
+
+        this.trees[this.treesCounter - 1].functions[functionName] = this.tree;
+        this.treesCounter--;
+        this.tree = this.trees[this.treesCounter];
 
     }
 
@@ -483,9 +501,21 @@ export class SyntaxAnalyzer
             return new WhileCycle(whileSymbol, condition, body);
         } else if (this.symbol.symbolCode === SymbolsCodes.repeatSy) {
             let repeatSymbol = this.symbol;
+            let compoundOperator = new CompoundOperator(repeatSymbol);
             this.nextSym();
-            let body = this.scanSentence();
+
+            while ( this.symbol !== null &&
+                    this.symbol.symbolCode !== SymbolsCodes.untilSy) {
+
+                let sentence = this.scanSentence();
+                compoundOperator.sentences.push(sentence);
+
+                this.accept(SymbolsCodes.semicolon);
+            }
+
             this.accept(SymbolsCodes.untilSy);
+
+            let body = compoundOperator;
             let condition = this.scanExpression();
 
             return new RepeatCycle(repeatSymbol, condition, body);
@@ -716,10 +746,11 @@ export class SyntaxAnalyzer
             if (variable instanceof Identifier) {
 
                 if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
+                    let leftParSymbol = this.symbol;
                     this.nextSym();
                     let parameters = this.scanParameters();
 
-                    return new FunctionCall(variable.symbol, parameters);
+                    return new FunctionCall(leftParSymbol, variable, parameters);
                 } else {
                     return variable;
                 }
