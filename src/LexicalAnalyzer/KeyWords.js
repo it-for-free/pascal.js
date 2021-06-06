@@ -28,6 +28,7 @@ export class KeyWords
             ['type', SymbolsCodes.typeSy],
             ['with', SymbolsCodes.withSy],
             ['real', SymbolsCodes.realSy],
+            ['char', SymbolsCodes.charSy],
             ['begin', SymbolsCodes.beginSy],
             ['while', SymbolsCodes.whileSy],
             ['array', SymbolsCodes.arraySy],

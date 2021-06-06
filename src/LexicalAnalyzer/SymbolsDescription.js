@@ -58,6 +58,7 @@ export class SymbolsDescription
             [SymbolsCodes.setSy, 'set'],
             [SymbolsCodes.typeSy, 'type'],
             [SymbolsCodes.realSy, 'real'],
+            [SymbolsCodes.charSy, 'char'],
             [SymbolsCodes.beginSy, 'begin'],
             [SymbolsCodes.whileSy, 'while'],
             [SymbolsCodes.arraySy, 'array'],

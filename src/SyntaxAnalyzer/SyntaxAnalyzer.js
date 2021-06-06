@@ -42,6 +42,7 @@ import { WhileCycle } from './Tree/Loops/WhileCycle';
 import { RepeatCycle } from './Tree/Loops/RepeatCycle';
 import { ForCycle } from './Tree/Loops/ForCycle';
 import { NmbInt } from './../LexicalAnalyzer/Symbols/NmbInt';
+import { Symbol } from './../LexicalAnalyzer/Symbols/Symbol';
 
 
 export class SyntaxAnalyzer
@@ -383,13 +384,13 @@ export class SyntaxAnalyzer
             case SymbolsCodes.stringSy:
             case SymbolsCodes.realSy:
             case SymbolsCodes.booleanSy:
-                returnType = new SimpleTypeApplied(this.symbol)
+                returnType = new SimpleTypeApplied(this.symbol);
                 break;
             case SymbolsCodes.functionSy:
-                returnType = new FunctionTypeApplied(this.symbol)
+                returnType = new FunctionTypeApplied(this.symbol);
                 break;
             case SymbolsCodes.procedureSy:
-                returnType = new ProcedureTypeApplied(this.symbol)
+                returnType = new ProcedureTypeApplied(this.symbol);
                 break;
             case SymbolsCodes.ident:
                 returnType = new SimpleTypeApplied(this.symbol);
@@ -552,14 +553,38 @@ export class SyntaxAnalyzer
             this.accept(SymbolsCodes.doSy);
             let body = this.scanSentence();
 
+            let variablesType = this.getVarTypeByIdentifier(identSymbol.value);
+            let operation = null;
+
+            let symbolCode = variablesType.symbol.symbolCode;
             let unityConstant = new Constant(new NmbInt(countSymbol.textPosition, SymbolsCodes.intC, '1'));
-            let operation = new Assignation(
-                assignSymbol,
-                variable,
-                countDown ?
-                new Subtraction(countSymbol, variable, unityConstant) :
-                new Addition(countSymbol, variable, unityConstant)
-            );
+            switch (symbolCode) {
+                case SymbolsCodes.integerSy:
+                    operation = new Assignation(
+                        assignSymbol,
+                        variable,
+                        countDown ?
+                        new Subtraction(countSymbol, variable, unityConstant) :
+                        new Addition(countSymbol, variable, unityConstant)
+                    );
+                    break;
+                case SymbolsCodes.charSy:
+                    let chrName = new Identifier( new Symbol(countSymbol.textPosition, SymbolsCodes.ident, 'chr'));
+                    let ordName = new Identifier( new Symbol(countSymbol.textPosition, SymbolsCodes.ident, 'ord'));
+                    operation = new Assignation(
+                        assignSymbol,
+                        variable,
+                        new FunctionCall(null, chrName, [
+                            countDown ?
+                            new Subtraction(countSymbol, new FunctionCall(null, ordName, [variable]), unityConstant) :
+                            new Addition(countSymbol, new FunctionCall(null, ordName, [variable]), unityConstant)
+                        ])
+//                        new FunctionCall(null, chrName, [
+//                            new Constant(new NmbInt(countSymbol.textPosition, SymbolsCodes.intC, '85'))
+//                        ])
+                    );
+                    break;
+            }
 
             return new ForCycle(forSymbol, init, condition, operation, body);
         }
@@ -843,5 +868,19 @@ export class SyntaxAnalyzer
     addError(errorCode, errorText = null, symbol)
     {
         this.lexicalAnalyzer.fileIO.addError(errorCode, errorText, symbol.textPosition);
+    }
+
+    getVarTypeByIdentifier(variableName)
+    {
+        let variablesType = null;
+        this.tree.vars.forEach( function (varDeclaration) {
+            varDeclaration.identifiers.forEach( function (identifier) {
+                if (identifier.symbol.value === variableName) {
+                    variablesType = varDeclaration.variablesType;
+                }
+            });
+        });
+
+        return variablesType;
     }
 };

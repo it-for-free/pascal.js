@@ -1,12 +1,13 @@
-import { ProcedureItem } from './ProcedureItem';
-import { WriteLn } from './Procedures/WriteLn.js';
+import { Ord } from './Functions/Ord';
+import { Chr } from './Functions/Chr';
 
 export class FunctionsStore
 {
     constructor()
     {
         this.items = {
-            writeln: new WriteLn()
+            chr: new Chr(),
+            ord: new Ord()
         };
     }
 

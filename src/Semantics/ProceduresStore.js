@@ -1,12 +1,14 @@
 import { ProcedureItem } from './ProcedureItem';
-import { WriteLn } from './Procedures/WriteLn.js';
+import { WriteLn } from './Procedures/WriteLn';
+import { Write } from './Procedures/Write';
 
 export class ProceduresStore
 {
     constructor()
     {
         this.items = {
-            writeln: new WriteLn()
+            writeln: new WriteLn(),
+            write: new Write()
         };
     }
 

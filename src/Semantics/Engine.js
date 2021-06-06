@@ -100,6 +100,9 @@ export class Engine
                             case SymbolsCodes.realSy:
                                 typeId = TypesIds.REAL;
                                 break;
+                            case SymbolsCodes.charSy:
+                                typeId = TypesIds.CHAR;
+                                break;
                         }
                     }
 
@@ -239,37 +242,49 @@ export class Engine
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
-            let result = leftOperand.value > rightOperand.value;
+            let result = leftOperand.typeId === TypesIds.CHAR &&
+                        rightOperand.typeId === TypesIds.CHAR ?
+                leftOperand.value.charCodeAt(0) > rightOperand.value.charCodeAt(0) :
+                leftOperand.value > rightOperand.value;
 
-            return new ScalarVariable(result, typeId)
+            return new ScalarVariable(result, typeId);
         } else if (expression instanceof Less) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
-            let result = leftOperand.value < rightOperand.value;
+            let result =  leftOperand.typeId === TypesIds.CHAR &&
+                        rightOperand.typeId === TypesIds.CHAR ?
+                leftOperand.value.charCodeAt(0) < rightOperand.value.charCodeAt(0) :
+                leftOperand.value < rightOperand.value;
 
-            return new ScalarVariable(result, typeId)
+            return new ScalarVariable(result, typeId);
         } else if (expression instanceof GreaterOrEqual) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
-            let result = leftOperand.value >= rightOperand.value;
+            let result =  leftOperand.typeId === TypesIds.CHAR &&
+                        rightOperand.typeId === TypesIds.CHAR ?
+                leftOperand.value.charCodeAt(0) >= rightOperand.value.charCodeAt(0) :
+                leftOperand.value >= rightOperand.value;
 
-            return new ScalarVariable(result, typeId)
+            return new ScalarVariable(result, typeId);
         } else if (expression instanceof LessOrEqual) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
-            let result = leftOperand.value <= rightOperand.value;
+            let result =  leftOperand.typeId === TypesIds.CHAR &&
+                        rightOperand.typeId === TypesIds.CHAR ?
+                leftOperand.value.charCodeAt(0) <= rightOperand.value.charCodeAt(0) :
+                leftOperand.value <= rightOperand.value;
 
-            return new ScalarVariable(result, typeId)
+            return new ScalarVariable(result, typeId);
         } else if (expression instanceof NotEqual) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
             let result = leftOperand.value !== rightOperand.value;
 
-            return new ScalarVariable(result, typeId)
+            return new ScalarVariable(result, typeId);
         } else if (expression instanceof In) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
