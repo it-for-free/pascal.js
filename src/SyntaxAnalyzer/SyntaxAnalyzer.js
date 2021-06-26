@@ -196,6 +196,12 @@ export class SyntaxAnalyzer
             this.nextSym();
 
             return new SimpleVariablesType(typeSymbol, false)
+        } else if (this.symbol.symbolCode === SymbolsCodes.arraySy) {
+            typeSymbol = this.symbol;
+            this.nextSym();
+            this.accept(SymbolsCodes.lBracket);
+            
+            this.accept(SymbolsCodes.rBracket);
         } else if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
             let enumType = new EnumType(this.symbol);
             let ident = null;
@@ -579,9 +585,6 @@ export class SyntaxAnalyzer
                             new Subtraction(countSymbol, new FunctionCall(null, ordName, [variable]), unityConstant) :
                             new Addition(countSymbol, new FunctionCall(null, ordName, [variable]), unityConstant)
                         ])
-//                        new FunctionCall(null, chrName, [
-//                            new Constant(new NmbInt(countSymbol.textPosition, SymbolsCodes.intC, '85'))
-//                        ])
                     );
                     break;
             }
