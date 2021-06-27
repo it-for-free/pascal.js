@@ -10,6 +10,7 @@ export class ErrorsDescription
             [ErrorsCodes.inadmissibleSymbol, 'Inadmissible Symbol'],
             [ErrorsCodes.forbiddenCharacter, 'Forbidden character'],
             [ErrorsCodes.nameNotDescribed, 'Name is not described'],
+            [ErrorsCodes.breakOutOfLoop, '\'break\' is out of loop'],
         ]);
     }
 

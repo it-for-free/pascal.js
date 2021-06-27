@@ -2,7 +2,7 @@
 import { runFile, insp } from '../../../testsHelper';
 import { ErrorsCodes } from '../../../../src/Errors/ErrorsCodes';
 
-let pjs = runFile(import.meta.url, 'break_out_of_loop.pas');
+let pjs = runFile(import.meta.url, 'break_out_of_loop.pas', true);
 
 
 test('get break out of loop exception', () => {

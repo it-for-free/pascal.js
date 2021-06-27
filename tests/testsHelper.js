@@ -14,22 +14,25 @@ export function getFullPath(ImportMetaUrlData, fileName) {
  * 
  * @param {mixed} data 
  */
-export function insp(data) {
-    console.log(util.inspect(data, 
-        {showHidden: false, depth: null})
-    );
+export function insp(data, comment = '') {
+    console.log('⚑', comment,  util.inspect(data, 
+        {showHidden: false, depth: null}));
 }
 
 /**
  * 
  * @param {*} ImportMetaUrlData 
- * @param {*} fileName 
+ * @param {string} fileName 
+ * @param {boolean} ignoreInnerError is interpreter error expected
  * @returns {PascalJs} 
  */
-export function runFile(ImportMetaUrlData, fileName) {
+export function runFile(ImportMetaUrlData, fileName, ignoreInnerError = false) {
 
     let PJS = new PascalJs();
     PJS.runFile(getFullPath(ImportMetaUrlData, fileName));
 
+    if (!ignoreInnerError  && PJS.error) {
+        throw PJS.error;
+    }
     return PJS;
 }

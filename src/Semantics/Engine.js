@@ -39,6 +39,7 @@ import { FunctionsStore } from './FunctionsStore';
 import { RuntimeError } from '../Errors/RuntimeError';
 import { ErrorsDescription } from '../Errors/ErrorsDescription';
 import { ErrorsCodes } from '../Errors/ErrorsCodes';
+import { Break } from  '../SyntaxAnalyzer/Tree/Break';
 
 export class Engine
 {
@@ -54,7 +55,9 @@ export class Engine
         this.functionsStore = new FunctionsStore();
         this.errorsDescription = new ErrorsDescription();
     }
-
+    /**
+     * @type Scope
+     */
     getCurrentScope()
     {
         return this.scopes[this.currentScopeId];
@@ -142,21 +145,22 @@ export class Engine
             currentScope.setValue(identifier, typeId, value);
         } else if (sentence instanceof CompoundOperator) {
             if (sentence.sentences) {
-                let self = this;
-                sentence.sentences.forEach(
-                    function(elem)
-                    {
-                        self.evaluateSentence(elem);
+                let sentences = sentence.sentences;
+                let sentencesNumber = sentences.length;
+                for (let i = 0; i < sentencesNumber; i++) {
+                    let result = this.evaluateSentence(sentences[i]);
+                    if (result instanceof Break) {
+                        return result;
                     }
-                );
+                }
             }
         } else if (sentence instanceof Implication) {
             let condition = this.evaluateExpression(sentence.condition);
 
             if (condition.value === true) {
-                this.evaluateSentence(sentence.left);
+                return this.evaluateSentence(sentence.left);
             } else {
-                this.evaluateSentence(sentence.right);
+                return this.evaluateSentence(sentence.right);
             }
         } else if (sentence instanceof ProcedureCall) {
 
@@ -168,7 +172,7 @@ export class Engine
                 this.proceduresStore.getProcedure(procedureName);
 
             if (procedure === null) {
-                this.addError(ErrorsCodes.nameNotDescribed, `Procedure '${procedureName}' is not declared!`, sentence.identifier.symbol.textPosition);
+                this.addError(ErrorsCodes.nameNotDescribed, `Procedure '${procedureName}' is not declared!`, sentence.identifier);
             }
 
             let scope = new Scope();
@@ -191,18 +195,43 @@ export class Engine
             this.treesCounter--;
             this.tree = this.trees[this.treesCounter];
         } else if (sentence instanceof WhileCycle) {
+            let currentScope = this.getCurrentScope();
+            currentScope.cycleDepth++;
             while (this.evaluateExpression(sentence.condition).value === true) {
-                this.evaluateSentence(sentence.body);
+                let result = this.evaluateSentence(sentence.body);
+                if (result instanceof Break) {
+                    break;
+                }
             }
+            currentScope.cycleDepth--;
         } else if (sentence instanceof RepeatCycle) {
+            let currentScope = this.getCurrentScope();
+            currentScope.cycleDepth++;
             do {
-                this.evaluateSentence(sentence.body);
+                let result = this.evaluateSentence(sentence.body);
+                if (result instanceof Break) {
+                    break;
+                }
             } while (this.evaluateExpression(sentence.condition).value !== true)
+            currentScope.cycleDepth--;
         } else if (sentence instanceof ForCycle) {
+            let currentScope = this.getCurrentScope();
+            currentScope.cycleDepth++;
             this.evaluateSentence(sentence.init);
             while (this.evaluateExpression(sentence.condition).value === true) {
-                this.evaluateSentence(sentence.body);
+                let result = this.evaluateSentence(sentence.body);
+                if (result instanceof Break) {
+                    break;
+                }
                 this.evaluateSentence(sentence.operation);
+            }
+            currentScope.cycleDepth--;
+        } else if (sentence instanceof Break) {
+            let currentScope = this.getCurrentScope();
+            if (currentScope.cycleDepth <= 0) {
+                this.addError(ErrorsCodes.breakOutOfLoop, null, sentence);
+            } else {
+                return sentence;
             }
         }
     }
@@ -392,7 +421,7 @@ export class Engine
                 this.functionsStore.getFunction(functionName);
 
             if (calledFunction === null) {
-                this.addError(ErrorsCodes.nameNotDescribed, `Function '${functionName}' is not declared!`, expression.identifier.symbol.textPosition);
+                this.addError(ErrorsCodes.nameNotDescribed, `Function '${functionName}' is not declared!`, expression.identifier);
             }
 
             let scope = new Scope();
@@ -442,11 +471,11 @@ export class Engine
         return null;
     }
 
-    addError(errorCode, errorText = null, textPosition = null)
+    addError(errorCode, errorText = null, treeNode = null)
     {
         let message = this.errorsDescription.getErrorTextByCode(errorCode) +
                 (errorText === null ? '' : ('. ' + errorText));
-        let currentPosition = textPosition === null ? this.getCurrentPosition() : textPosition;
+        let currentPosition = treeNode === null ? null : treeNode.symbol.textPosition;
         throw new RuntimeError(errorCode, message, currentPosition);
     }
 };

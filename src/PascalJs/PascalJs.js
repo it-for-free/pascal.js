@@ -4,19 +4,24 @@ import { ConsoleOutput } from '../IO/ConsoleOutput';
 import { LexicalAnalyzer } from '../LexicalAnalyzer/LexicalAnalyzer';
 import { SyntaxAnalyzer } from '../SyntaxAnalyzer/SyntaxAnalyzer';
 import { Engine } from '../Semantics/Engine';
+import { RuntimeError } from '../Errors/RuntimeError';
 
-export class PascalJs
-{
+export class PascalJs {
     /**
      * @type Engine  
      */
     engine;
 
-    constructor() {}
-    
+    /**
+     * Possible run/parce error
+     */
+    error;
+
+    constructor() { }
+
     runFile(filePath) {
 
-        // try {
+        try {
             var fileIO = new FileIO(filePath,
                 new ConsoleOutput()
             );
@@ -25,11 +30,15 @@ export class PascalJs
             var tree = syntaxAnalyzer.analyze();
             var engine = new Engine(tree);
             engine.run();
-        // } catch (e) {
-        //     throw new Error(e.message);
-        // }
+        } catch (e) {
 
-        this.engine = engine; 
+            if (e instanceof RuntimeError) {
+                this.error = e;
+            } else throw e;
+        }
+
+
+        this.engine = engine;
         return engine;
     }
 

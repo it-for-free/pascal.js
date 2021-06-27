@@ -43,6 +43,7 @@ import { RepeatCycle } from './Tree/Loops/RepeatCycle';
 import { ForCycle } from './Tree/Loops/ForCycle';
 import { NmbInt } from './../LexicalAnalyzer/Symbols/NmbInt';
 import { Symbol } from './../LexicalAnalyzer/Symbols/Symbol';
+import { Break } from './Tree/Break';
 
 
 export class SyntaxAnalyzer
@@ -590,6 +591,10 @@ export class SyntaxAnalyzer
             }
 
             return new ForCycle(forSymbol, init, condition, operation, body);
+        } else if (this.symbol.symbolCode === SymbolsCodes.breakSy) {
+            let breakSymbol = this.symbol;
+            this.nextSym();
+            return new Break(breakSymbol);
         }
     }
 

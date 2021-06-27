@@ -68,5 +68,6 @@ export const SymbolsCodes = {
     booleanSy       :134,
     programSy       :135,
     functionSy      :136,
-    procedureSy     :137
+    procedureSy     :137,
+    breakSy         :138,
 };

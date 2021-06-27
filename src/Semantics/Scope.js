@@ -7,7 +7,8 @@ export class Scope
     constructor(parentScope = null)
     {
         this.parentScope = parentScope;
-        this.items = {}
+        this.items = {};
+        this.cycleDepth = 0;
     }
 
     addVariable(name, typeId, value = null)

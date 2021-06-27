@@ -30,6 +30,7 @@ export class KeyWords
             ['real', SymbolsCodes.realSy],
             ['char', SymbolsCodes.charSy],
             ['begin', SymbolsCodes.beginSy],
+            ['break', SymbolsCodes.breakSy],
             ['while', SymbolsCodes.whileSy],
             ['array', SymbolsCodes.arraySy],
             ['const', SymbolsCodes.constSy],
@@ -44,7 +45,7 @@ export class KeyWords
             ['integer', SymbolsCodes.integerSy],
             ['boolean', SymbolsCodes.booleanSy],
             ['function', SymbolsCodes.functionSy],
-            ['procedure', SymbolsCodes.procedureSy]
+            ['procedure', SymbolsCodes.procedureSy],
         ]);
     }
 
