@@ -10,12 +10,12 @@ begin
    begin
       b := b + 1;
       if (b = 8) then
-         break;
+         break
    end;
 
    repeat
       c := c + 1;
       if (c = 9) then
          break;
-   until (c >= 15);
+   until (c >= 15)
 end.

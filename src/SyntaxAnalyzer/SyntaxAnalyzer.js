@@ -451,7 +451,9 @@ export class SyntaxAnalyzer
             let sentence = this.scanSentence();
             this.tree.sentences.push(sentence);
 
-            this.accept(SymbolsCodes.semicolon);
+            if (this.symbol.symbolCode !==  SymbolsCodes.endSy) {
+                this.accept(SymbolsCodes.semicolon);
+            }
         }
 
         this.accept(SymbolsCodes.endSy);
@@ -609,7 +611,9 @@ export class SyntaxAnalyzer
             let sentence = this.scanSentence();
             compoundOperator.sentences.push(sentence);
 
-            this.accept(SymbolsCodes.semicolon);
+            if (this.symbol.symbolCode !== SymbolsCodes.endSy) {
+                this.accept(SymbolsCodes.semicolon);
+            }
         }
 
         this.accept(SymbolsCodes.endSy);
