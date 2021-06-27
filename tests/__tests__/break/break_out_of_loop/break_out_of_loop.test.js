@@ -1,0 +1,13 @@
+
+import { runFile, insp } from '../../../testsHelper';
+import { ErrorsCodes } from '../../../../src/Errors/ErrorsCodes';
+
+let pjs = runFile(import.meta.url, 'break_out_of_loop.pas');
+
+
+test('get break out of loop exception', () => {
+    // insp(pjs.error.errorCode, 'errorCode');  
+    expect(pjs.error.errorCode).toBe(ErrorsCodes.breakOutOfLoop);
+});
+
+
