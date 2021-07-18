@@ -8,6 +8,6 @@
     },
     "scripts": {
         "test": "node --experimental-vm-modules node_modules/.bin/jest tests/__tests__",
-        "testme": "node --experimental-vm-modules node_modules/.bin/jest tests/__tests__/arithmetics/div_mod_base.test.js"
+        "testme": "node --experimental-vm-modules node_modules/.bin/jest tests/__tests__/procedures/write_writeln/write_writeln_base.js"
     }
 }

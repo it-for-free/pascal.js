@@ -4,6 +4,7 @@ import { LexicalAnalyzer } from './src/LexicalAnalyzer/LexicalAnalyzer';
 import { SyntaxAnalyzer } from './src/SyntaxAnalyzer/SyntaxAnalyzer';
 import { Engine } from './src/Semantics/Engine';
 import { RuntimeError } from './src/Errors/RuntimeError';
+import { config } from './src/PascalJs/demoConfig';
 
 
 var fileIO = new FileIO('example.pas', new ConsoleOutput());
@@ -21,7 +22,7 @@ try {
     var tree = syntaxAnalyzer.analyze();
     //console.dir(tree, { depth: null });
 
-    var engine = new Engine(tree);
+    var engine = new Engine(tree, config);
     engine.run();
 } catch (e) {
     if (e instanceof RuntimeError) {

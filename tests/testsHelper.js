@@ -3,6 +3,7 @@ import { dirname } from 'path';
 import util from 'util';
 import { FileIO, ConsoleOutput, LexicalAnalyzer, 
     SyntaxAnalyzer, Engine,  PascalJs   } from '../src/pascal.js';
+import { config as defaultConfig } from '../src/PascalJs/demoConfig';    
 
 export function getFullPath(ImportMetaUrlData, fileName) {
     const __filename = fileURLToPath(ImportMetaUrlData);
@@ -26,9 +27,13 @@ export function insp(data, comment = '') {
  * @param {boolean} ignoreInnerError is interpreter error expected
  * @returns {PascalJs} 
  */
-export function runFile(ImportMetaUrlData, fileName, ignoreInnerError = false) {
+export function runFile(ImportMetaUrlData, fileName, ignoreInnerError = false, config) {
 
-    let PJS = new PascalJs();
+    if (!config) {
+        config = defaultConfig;
+    }
+    
+    let PJS = new PascalJs(config);
     PJS.runFile(getFullPath(ImportMetaUrlData, fileName));
 
     if (!ignoreInnerError  && PJS.error) {

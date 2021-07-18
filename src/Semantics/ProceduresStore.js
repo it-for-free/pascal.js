@@ -4,11 +4,11 @@ import { Write } from './Procedures/Write';
 
 export class ProceduresStore
 {
-    constructor()
+    constructor(outputStream, ouputNewLineSymbol)
     {
         this.items = {
-            writeln: new WriteLn(),
-            write: new Write()
+            writeln: new WriteLn(outputStream, ouputNewLineSymbol),
+            write: new Write(outputStream)
         };
     }
 

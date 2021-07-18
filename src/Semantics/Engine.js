@@ -43,7 +43,7 @@ import { Break } from  '../SyntaxAnalyzer/Tree/Break';
 
 export class Engine
 {
-    constructor(tree)
+    constructor(tree, config)
     {
         this.tree = tree;
         this.trees = [this.tree];
@@ -51,7 +51,7 @@ export class Engine
         this.scopes = [];
         this.currentScopeId = 0;
         this.scopes[this.currentScopeId] = new Scope();
-        this.proceduresStore = new ProceduresStore();
+        this.proceduresStore = new ProceduresStore(config.outputStream, config.ouputNewLineSymbol);
         this.functionsStore = new FunctionsStore();
         this.errorsDescription = new ErrorsDescription();
     }

@@ -5,7 +5,7 @@ import { LexicalAnalyzer } from '../LexicalAnalyzer/LexicalAnalyzer';
 import { SyntaxAnalyzer } from '../SyntaxAnalyzer/SyntaxAnalyzer';
 import { Engine } from '../Semantics/Engine';
 import { RuntimeError } from '../Errors/RuntimeError';
-
+import { config } from './demoConfig';
 export class PascalJs {
     /**
      * @type Engine  
@@ -17,7 +17,9 @@ export class PascalJs {
      */
     error;
 
-    constructor() { }
+    constructor(config) {
+        this.config = config;
+    }
 
     runFile(filePath) {
 
@@ -28,7 +30,7 @@ export class PascalJs {
             var lexicalAnalyzer = new LexicalAnalyzer(fileIO);
             var syntaxAnalyzer = new SyntaxAnalyzer(lexicalAnalyzer);
             var tree = syntaxAnalyzer.analyze();
-            var engine = new Engine(tree);
+            var engine = new Engine(tree, this.config);
             engine.run();
         } catch (e) {
 
