@@ -6,5 +6,10 @@ export const TypesIds = {
     RECORD: 4,
     ENUM: 5,
     BOOLEAN: 6,
-    STRING: 7
+    STRING: 7,
+    POINTER: 8,
+    APPLIED_NAMED: 9,
+    PROCEDURE: 10,
+    FUNCTION: 11,
+    PARAMETERS_LIST: 12
 };

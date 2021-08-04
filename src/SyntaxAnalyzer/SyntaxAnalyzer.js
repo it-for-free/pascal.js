@@ -13,8 +13,10 @@ import { Constant } from './Tree/Constant';
 import { Identifier } from './Tree/Identifier';
 import { FunctionCall } from './Tree/FunctionCall';
 import { ProcedureCall } from './Tree/ProcedureCall';
-import { SimpleVariablesType } from './Tree/Types/SimpleVariablesType';
+import { ScalarType } from './Tree/Types/ScalarType';
+import { AppliedNamedType } from './Tree/Types/AppliedNamedType';
 import { VariablesDeclaration } from './Tree/VariablesDeclaration';
+import { TypeDeclaration } from './Tree/TypeDeclaration';
 import { CompoundOperator } from './Tree/CompoundOperator';
 import { Implication } from './Tree/Implication';
 import { IntegerDivision } from './Tree/IntegerDivision';
@@ -32,11 +34,10 @@ import { Less } from './Tree/Relations/Less';
 import { Greater } from './Tree/Relations/Greater';
 import { GreaterOrEqual } from './Tree/Relations/GreaterOrEqual';
 import { LessOrEqual } from './Tree/Relations/LessOrEqual';
-import { FunctionTypeApplied } from './Tree/ParametersList/FunctionTypeApplied';
-import { ProcedureTypeApplied } from './Tree/ParametersList/ProcedureTypeApplied';
-import { SimpleTypeApplied } from './Tree/ParametersList/SimpleTypeApplied';
+import { FunctionType } from './Tree/Types/FunctionType';
+import { ProcedureType } from './Tree/Types/ProcedureType';
+import { TypeApplied } from './Tree/ParametersList/TypeApplied';
 import { TypesIds } from '../Semantics/Variables/TypesIds';
-import { TypesStore } from './TypesStore';
 import { EnumType } from './Tree/Types/EnumType';
 import { WhileCycle } from './Tree/Loops/WhileCycle';
 import { RepeatCycle } from './Tree/Loops/RepeatCycle';
@@ -132,14 +133,16 @@ export class SyntaxAnalyzer
     typePart()
     {
         if (this.symbol.symbolCode === SymbolsCodes.typeSy) {
-            this.tree.types = new TypesStore();
+            this.tree.types = [];
             this.nextSym();
             do {
                 let identSymbol = this.symbol;
                 this.accept(SymbolsCodes.ident);
+                let equalSymbol = this.symbol;
                 this.accept(SymbolsCodes.equal);
                 let type = this.scanType();
-                this.tree.types.addType(identSymbol.stringValue, type);
+                let typeDeclaration = new TypeDeclaration(equalSymbol, new Identifier(identSymbol), type);
+                this.tree.types.push(typeDeclaration);
                 this.accept(SymbolsCodes.semicolon);
             } while (this.symbol.symbolCode === SymbolsCodes.ident)
         }
@@ -190,18 +193,41 @@ export class SyntaxAnalyzer
         if (this.symbol.symbolCode === SymbolsCodes.integerSy ||
             this.symbol.symbolCode === SymbolsCodes.booleanSy ||
             this.symbol.symbolCode === SymbolsCodes.realSy ||
-            this.symbol.symbolCode === SymbolsCodes.charSy ||
-            this.symbol.symbolCode === SymbolsCodes.ident) {
+            this.symbol.symbolCode === SymbolsCodes.stringSy ||
+            this.symbol.symbolCode === SymbolsCodes.charSy) {
 
             typeSymbol = this.symbol;
             this.nextSym();
+            let typeId = null;
 
-            return new SimpleVariablesType(typeSymbol, false)
+            switch (typeSymbol.symbolCode) {
+                case SymbolsCodes.charSy:
+                    typeId = TypesIds.CHAR;
+                    break;
+                case SymbolsCodes.integerSy:
+                    typeId = TypesIds.INTEGER;
+                    break;
+                case SymbolsCodes.stringSy:
+                    typeId = TypesIds.STRING;
+                    break;
+                case SymbolsCodes.realSy:
+                    typeId = TypesIds.REAL;
+                    break;
+                case SymbolsCodes.booleanSy:
+                    typeId = TypesIds.BOOLEAN;
+                    break;
+            }
+
+            return new ScalarType(typeSymbol, typeId);
+        } else if (this.symbol.symbolCode === SymbolsCodes.ident) {
+            typeSymbol = this.symbol;
+            this.nextSym();
+            return new AppliedNamedType(typeSymbol);
         } else if (this.symbol.symbolCode === SymbolsCodes.arraySy) {
             typeSymbol = this.symbol;
             this.nextSym();
             this.accept(SymbolsCodes.lBracket);
-            
+
             this.accept(SymbolsCodes.rBracket);
         } else if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
             let enumType = new EnumType(this.symbol);
@@ -214,6 +240,18 @@ export class SyntaxAnalyzer
             } while (this.symbol.symbolCode === SymbolsCodes.comma )
             this.accept(SymbolsCodes.rightPar);
             return enumType;
+        } else if (this.symbol.symbolCode === SymbolsCodes.functionSy) {
+            let functionType = new FunctionType(this.symbol);
+            this.nextSym();
+            functionType.signature = this.scanParametersList();
+            this.accept(SymbolsCodes.colon);
+            functionType.returnType = this.scanType();
+            return functionType;
+        } else if (this.symbol.symbolCode === SymbolsCodes.procedureSy) {
+            let procedureType = new ProcedureType(this.symbol);
+            this.nextSym();
+            procedureType.signature = this.scanParametersList();
+            return procedureType;
         }
     }
 
@@ -266,7 +304,7 @@ export class SyntaxAnalyzer
         this.accept(SymbolsCodes.ident);
         this.tree.signature = this.scanParametersList();
         this.accept(SymbolsCodes.colon);
-        this.tree.returnType = this.scanReturnType();
+        this.tree.returnType = this.scanType();
 
         this.accept(SymbolsCodes.semicolon);
         this.scanBlock();
@@ -295,24 +333,13 @@ export class SyntaxAnalyzer
                         this.nextSym();
                     }
 
-                    let parameters = null;
-                    switch (this.symbol.symbolCode) {
-                        case SymbolsCodes.varSy:
-                            parameters = new SimpleTypeApplied(this.symbol, true);
-                            this.nextSym();
-                            break;
-                        case SymbolsCodes.functionSy:
-                            parameters = new FunctionTypeApplied(this.symbol);
-                            this.nextSym();
-                            break;
-                        case SymbolsCodes.procedureSy:
-                            parameters = new ProcedureTypeApplied(this.symbol);
-                            this.nextSym();
-                            break;
-                        case SymbolsCodes.ident:
-                            parameters = new SimpleTypeApplied(this.symbol);
-                            break;
+                    let byReference = false;
+                    if (this.symbol.symbolCode === SymbolsCodes.varSy) {
+                        byReference = true;
+                        this.nextSym();
                     }
+
+                    let parameters = new TypeApplied(this.symbol, byReference);
 
                     let identifiers = [];
 
@@ -327,48 +354,9 @@ export class SyntaxAnalyzer
 
                     } while (this.symbol.symbolCode === SymbolsCodes.comma)
 
+                    this.accept(SymbolsCodes.colon);
                     parameters.identifiers = identifiers;
-
-                    if (parameters instanceof FunctionTypeApplied ||
-                        parameters instanceof ProcedureTypeApplied) {
-
-                        parameters.signature = this.scanParametersList();
-                        this.accept(SymbolsCodes.colon);
-                        parameters.returnType = this.scanReturnType();
-                    } else {
-
-                        this.accept(SymbolsCodes.colon);
-
-                        switch (this.symbol.symbolCode) {
-                            case SymbolsCodes.charSy:
-                                parameters.typeId = TypesIds.CHAR;
-                                this.nextSym();
-                                break;
-                            case SymbolsCodes.integerSy:
-                                parameters.typeId = TypesIds.INTEGER;
-                                this.nextSym();
-                                break;
-                            case SymbolsCodes.stringSy:
-                                parameters.typeId = TypesIds.STRING;
-                                this.nextSym();
-                                break;
-                            case SymbolsCodes.realSy:
-                                parameters.typeId = TypesIds.REAL;
-                                this.nextSym();
-                                break;
-                            case SymbolsCodes.booleanSy:
-                                parameters.typeId = TypesIds.BOOLEAN;
-                                this.nextSym();
-                                break;
-                            case SymbolsCodes.ident:
-                                parameters = new SimpleTypeApplied(this.symbol);
-                                parameters.typeIdentifier = new Identifier(this.symbol);
-                                this.nextSym();
-                                break;
-                        }
-                    }
-
-
+                    parameters.type = this.scanType();
 
                     parametersList.push(parameters);
 
@@ -379,66 +367,6 @@ export class SyntaxAnalyzer
         }
 
         return parametersList;
-    }
-
-    scanReturnType()
-    {
-        let returnType = null;
-
-        switch (this.symbol.symbolCode) {
-            case SymbolsCodes.charSy:
-            case SymbolsCodes.integerSy:
-            case SymbolsCodes.stringSy:
-            case SymbolsCodes.realSy:
-            case SymbolsCodes.booleanSy:
-                returnType = new SimpleTypeApplied(this.symbol);
-                break;
-            case SymbolsCodes.functionSy:
-                returnType = new FunctionTypeApplied(this.symbol);
-                break;
-            case SymbolsCodes.procedureSy:
-                returnType = new ProcedureTypeApplied(this.symbol);
-                break;
-            case SymbolsCodes.ident:
-                returnType = new SimpleTypeApplied(this.symbol);
-                returnType.typeIdentifier = new Identifier(this.symbol);
-                break;
-        }
-
-        switch (this.symbol.symbolCode) {
-            case SymbolsCodes.charSy:
-                returnType.typeId = TypesIds.CHAR;
-                this.nextSym();
-                break;
-            case SymbolsCodes.integerSy:
-                returnType.typeId = TypesIds.INTEGER;
-                this.nextSym();
-                break;
-            case SymbolsCodes.stringSy:
-                returnType.typeId = TypesIds.STRING;
-                this.nextSym();
-                break;
-            case SymbolsCodes.realSy:
-                returnType.typeId = TypesIds.REAL;
-                this.nextSym();
-                break;
-            case SymbolsCodes.booleanSy:
-                returnType.typeId = TypesIds.BOOLEAN;
-                this.nextSym();
-                break;
-            case SymbolsCodes.functionSy:
-                this.nextSym();
-                returnType.signature = this.scanParametersList();
-                this.accept(SymbolsCodes.colon);
-                returnType.returnType = this.scanReturnType();
-                break;
-            case SymbolsCodes.procedureSy:
-                this.nextSym();
-                returnType.signature = this.scanParametersList(false);
-                break;
-        }
-
-        return returnType;
     }
 
     statementPart()

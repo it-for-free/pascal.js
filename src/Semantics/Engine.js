@@ -2,7 +2,10 @@ import { Scope } from './Scope';
 import { ScalarVariable } from './Variables/ScalarVariable';
 import { TypesIds } from './Variables/TypesIds';
 import { VariablesDeclaration } from '../SyntaxAnalyzer/Tree/VariablesDeclaration';
-import { SimpleVariablesType } from '../SyntaxAnalyzer/Tree/Types/SimpleVariablesType';
+import { TypeDeclaration } from '../SyntaxAnalyzer/Tree/TypeDeclaration';
+import { ScalarType } from '../SyntaxAnalyzer/Tree/Types/ScalarType';
+import { ArrayType } from '../SyntaxAnalyzer/Tree/Types/ArrayType';
+import { ParametersList } from '../SyntaxAnalyzer/Tree/Types/ParametersList';
 import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
 import { Assignation } from '../SyntaxAnalyzer/Tree/Assignation';
 import { SymbolsCodes } from '../LexicalAnalyzer/SymbolsCodes';
@@ -65,6 +68,7 @@ export class Engine
 
     run()
     {
+        this.setTypes();
         this.setVariables();
 
         let self = this;
@@ -88,44 +92,39 @@ export class Engine
             this.tree.vars.forEach(function (variablesDeclaration) {
                 if (variablesDeclaration instanceof VariablesDeclaration) {
 
-                    let typeId = null;
-
                     let variablesType = variablesDeclaration.variablesType;
-                    if (variablesType instanceof SimpleVariablesType) {
-                        let symbolCode = variablesType.symbol.symbolCode;
-                        switch (symbolCode) {
-                            case SymbolsCodes.integerSy:
-                                typeId = TypesIds.INTEGER;
-                                break;
-                            case SymbolsCodes.booleanSy:
-                                typeId = TypesIds.BOOLEAN;
-                                break;
-                            case SymbolsCodes.realSy:
-                                typeId = TypesIds.REAL;
-                                break;
-                            case SymbolsCodes.charSy:
-                                typeId = TypesIds.CHAR;
-                                break;
-                        }
-                    }
 
-                    if (typeId !== null) {
-                        variablesDeclaration.identifiers.forEach(
-                            function(identifier)
-                            {
-                                if (identifier instanceof Identifier) {
-                                    let name = identifier.symbol.value;
-                                    currentScope.addVariable(name, typeId);
+                    variablesDeclaration.identifiers.forEach(
+                        function(identifier)
+                        {
+                            if (identifier instanceof Identifier) {
+                                let name = identifier.symbol.value;
+                                currentScope.addVariable(name, variablesDeclaration.variablesType, null, identifier);
 
-                                } else {
-                                    throw 'Identifier must be here!';
-                                }
+                            } else {
+                                throw 'Identifier must be here!';
                             }
-                        );
-
-                    }
+                        }
+                    );
                 } else {
                     throw 'VariablesDeclaration object must be here!';
+                }
+            });
+        }
+    }
+
+    setTypes()
+    {
+        let currentScope = this.getCurrentScope();
+
+        if (this.tree.types) {
+            this.tree.types.forEach(function (typeDeclaration) {
+                if (typeDeclaration instanceof TypeDeclaration) {
+
+                    currentScope.addType(typeDeclaration);
+
+                } else {
+                    throw 'TypeDeclaration object must be here!';
                 }
             });
         }
@@ -142,7 +141,7 @@ export class Engine
             let typeId = expressionResult.typeId;
             let value = expressionResult.value;
 
-            currentScope.setValue(identifier, typeId, value);
+            currentScope.setValue(identifier, typeId, value, sentence.destination);
         } else if (sentence instanceof CompoundOperator) {
             if (sentence.sentences) {
                 let sentences = sentence.sentences;
@@ -240,8 +239,8 @@ export class Engine
     {
         let parametersValues = parameters.map(elem => this.evaluateExpression(elem));
         if (signature.length === 0) {
-            scope.addVariable('parametersList', TypesIds.ARRAY);
-            scope.setValue('parametersList', TypesIds.ARRAY, parametersValues);
+            scope.addVariable('parametersList', new ParametersList());
+            scope.setValue('parametersList', TypesIds.PARAMETERS_LIST, parametersValues);
         } else {
             let parametersCounter = 0;
             signature.forEach(function(appliedType) {

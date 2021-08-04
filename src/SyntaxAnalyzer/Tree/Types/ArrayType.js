@@ -1,13 +1,13 @@
-import { TreeNodeBase } from '../TreeNodeBase';
+import { TypeBase } from './TypeBase';
+import { TypesIds } from '../../../Semantics/Variables/TypesIds';
 
-export class ArrayType extends TreeNodeBase
+export class ArrayType extends TypeBase
 {
-    constructor(symbol, typeOfElements, indexFrom, indexTo, isPointer = false)
+    constructor(symbol, typeOfElements = null, indexFrom = null, indexTo = null)
     {
-        super(symbol);
+        super(symbol, TypesIds.ARRAY);
         this.typeOfElements = typeOfElements;
         this.indexFrom = indexFrom;
         this.indexTo = indexTo;
-        this.isPointer = isPointer;
     }
 }
