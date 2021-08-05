@@ -3,9 +3,9 @@ import { ScalarVariable } from './Variables/ScalarVariable';
 import { TypesIds } from './Variables/TypesIds';
 import { VariablesDeclaration } from '../SyntaxAnalyzer/Tree/VariablesDeclaration';
 import { TypeDeclaration } from '../SyntaxAnalyzer/Tree/TypeDeclaration';
+import { ConstantDeclaration } from '../SyntaxAnalyzer/Tree/ConstantDeclaration';
 import { ScalarType } from '../SyntaxAnalyzer/Tree/Types/ScalarType';
 import { ArrayType } from '../SyntaxAnalyzer/Tree/Types/ArrayType';
-import { ParametersList } from '../SyntaxAnalyzer/Tree/Types/ParametersList';
 import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
 import { Assignation } from '../SyntaxAnalyzer/Tree/Assignation';
 import { SymbolsCodes } from '../LexicalAnalyzer/SymbolsCodes';
@@ -68,6 +68,7 @@ export class Engine
 
     run()
     {
+        this.setConstants();
         this.setTypes();
         this.setVariables();
 
@@ -125,6 +126,23 @@ export class Engine
 
                 } else {
                     throw 'TypeDeclaration object must be here!';
+                }
+            });
+        }
+    }
+
+    setConstants()
+    {
+        let currentScope = this.getCurrentScope();
+
+        if (this.tree.constants) {
+            this.tree.constants.forEach(function (constantDeclaration) {
+                if (constantDeclaration instanceof ConstantDeclaration) {
+
+                    currentScope.addConstant(constantDeclaration);
+
+                } else {
+                    throw 'ConstantDeclaration object must be here!';
                 }
             });
         }
@@ -239,8 +257,7 @@ export class Engine
     {
         let parametersValues = parameters.map(elem => this.evaluateExpression(elem));
         if (signature.length === 0) {
-            scope.addVariable('parametersList', new ParametersList());
-            scope.setValue('parametersList', TypesIds.PARAMETERS_LIST, parametersValues);
+            scope.setParametersList(parametersValues);
         } else {
             let parametersCounter = 0;
             signature.forEach(function(appliedType) {

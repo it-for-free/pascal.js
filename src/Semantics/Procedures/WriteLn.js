@@ -11,8 +11,8 @@ export class WriteLn extends ProcedureItem
 
     innerRun(scope)
     {
-        let parametersList = scope.getVariable('parametersList');
+        let parametersList = scope.getParametersList();
 
-        this.outputStream.write(parametersList.value.map(elem => elem.value).join('') + this.ouputNewLineSymbol);
+        this.outputStream.write(parametersList.map(elem => elem.value).join('') + this.ouputNewLineSymbol);
     }
 };

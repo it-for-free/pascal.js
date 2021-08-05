@@ -11,8 +11,8 @@ export class Chr extends FunctionItem
 
     innerRun(scope)
     {
-        let parametersList = scope.getVariable('parametersList');
-        let codeParameter = parametersList.value[0];
+        let parametersList = scope.getParametersList();
+        let codeParameter = parametersList[0];
         let code = codeParameter.value;
         let char = String.fromCharCode(code);
 

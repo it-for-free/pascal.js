@@ -16,6 +16,7 @@ import { ProcedureCall } from './Tree/ProcedureCall';
 import { ScalarType } from './Tree/Types/ScalarType';
 import { AppliedNamedType } from './Tree/Types/AppliedNamedType';
 import { VariablesDeclaration } from './Tree/VariablesDeclaration';
+import { ConstantDeclaration } from './Tree/ConstantDeclaration';
 import { TypeDeclaration } from './Tree/TypeDeclaration';
 import { CompoundOperator } from './Tree/CompoundOperator';
 import { Implication } from './Tree/Implication';
@@ -127,7 +128,26 @@ export class SyntaxAnalyzer
 
     constPart()
     {
+        if (this.symbol.symbolCode === SymbolsCodes.constSy) {
+            this.tree.constants = [];
+            this.nextSym();
+            do {
+                let identSymbol = this.symbol;
+                this.accept(SymbolsCodes.ident);
+                let type = null;
+                if (this.symbol.symbolCode === SymbolsCodes.colon) {
+                    this.nextSym();
+                    type = this.scanType();
+                }
+                let equalSymbol = this.symbol;
+                this.accept(SymbolsCodes.equal);
 
+                let value = this.scanConstant();
+                let constantDeclaration = new ConstantDeclaration(equalSymbol, new Identifier(identSymbol), value, type);
+                this.tree.constants.push(constantDeclaration);
+                this.accept(SymbolsCodes.semicolon);
+            } while (this.symbol.symbolCode === SymbolsCodes.ident)
+        }
     }
 
     typePart()
@@ -724,7 +744,8 @@ export class SyntaxAnalyzer
         } else if ( this.symbol.symbolCode === SymbolsCodes.floatC ||
                     this.symbol.symbolCode === SymbolsCodes.intC ||
                     this.symbol.symbolCode === SymbolsCodes.stringC ||
-                    this.symbol.symbolCode === SymbolsCodes.charC) {
+                    this.symbol.symbolCode === SymbolsCodes.charC ||
+                    this.symbol.symbolCode === SymbolsCodes.booleanC ) {
             return this.scanUnsignedConstant();
         } else if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
             this.nextSym();
@@ -765,6 +786,7 @@ export class SyntaxAnalyzer
             case SymbolsCodes.intC:
             case SymbolsCodes.charC:
             case SymbolsCodes.stringC:
+            case SymbolsCodes.booleanC:
                 constant = new Constant(this.symbol);
                 this.nextSym();
         }
@@ -779,11 +801,12 @@ export class SyntaxAnalyzer
         let signSymbol = null;
         switch(this.symbol.symbolCode) {
             case SymbolsCodes.minus:
+                signSymbol = this.symbol;
                 this.nextSym();
                 unaryMinus = true;
-                signSymbol = this.symbol;
                 break;
             case SymbolsCodes.plus:
+                signSymbol = this.symbol;
                 this.nextSym();
         }
 
@@ -794,6 +817,7 @@ export class SyntaxAnalyzer
             case SymbolsCodes.intC:
             case SymbolsCodes.charC:
             case SymbolsCodes.stringC:
+            case SymbolsCodes.booleanC:
                 constant = new Constant(this.symbol);
                 this.nextSym();
         }

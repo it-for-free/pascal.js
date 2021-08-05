@@ -29,6 +29,7 @@ export const SymbolsCodes = {
     intC            :15,   /* Integer Constant */
     charC           :83,   /* Character Constant */
     stringC         :84,   /* String Constant */
+    booleanC        :85,   /* Boolean Constant */
     caseSy          :31,
     elseSy          :32,
     fileSy          :57,
@@ -70,4 +71,6 @@ export const SymbolsCodes = {
     functionSy      :136,
     procedureSy     :137,
     breakSy         :138,
+    trueSy          :139,
+    falseSy         :140,
 };

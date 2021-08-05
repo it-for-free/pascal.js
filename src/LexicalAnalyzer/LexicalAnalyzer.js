@@ -5,6 +5,7 @@ import { NmbFloat } from './Symbols/NmbFloat';
 import { NmbInt } from './Symbols/NmbInt';
 import { OneSymbol } from './Symbols/OneSymbol';
 import { StringConstant } from './Symbols/StringConstant';
+import { BoolConstant } from './Symbols/BoolConstant';
 import { ErrorsCodes } from '../Errors/ErrorsCodes';
 
 export class LexicalAnalyzer
@@ -229,7 +230,9 @@ export class LexicalAnalyzer
 
     getSymbol(symbolCode)
     {
-        return new Symbol(this.token, symbolCode, this.currentWord);
+        return symbolCode === SymbolsCodes.trueSy || symbolCode === SymbolsCodes.falseSy ?
+            new BoolConstant(this.token, SymbolsCodes.booleanC, this.currentWord) :
+            new Symbol(this.token, symbolCode, this.currentWord);
     }
 
     skipWhiteSpaces()

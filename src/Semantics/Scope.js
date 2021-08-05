@@ -5,7 +5,6 @@ import { ErrorsDescription } from '../Errors/ErrorsDescription';
 import { ErrorsCodes } from '../Errors/ErrorsCodes';
 import { ScalarType } from '../SyntaxAnalyzer/Tree/Types/ScalarType';
 import { AppliedNamedType } from '../SyntaxAnalyzer/Tree/Types/AppliedNamedType';
-import { ParametersList } from '../SyntaxAnalyzer/Tree/Types/ParametersList';
 
 
 export class Scope
@@ -18,19 +17,21 @@ export class Scope
         this.types = {};
         this.cycleDepth = 0;
         this.errorsDescription = new ErrorsDescription;
+        this.parametersList = null;
     }
 
     addVariable(name, type, value = null, treeNode = null)
     {
         let lowerCaseName = name.toLowerCase();
-        if (this.items.hasOwnProperty(lowerCaseName)) {
+        if (this.constants.hasOwnProperty(lowerCaseName)) {
+            this.addError(ErrorsCodes.identifierAlreadyUsed, `Constant '${lowerCaseName}' declared.`, treeNode === null ? type : treeNode);
+        } else if (this.items.hasOwnProperty(lowerCaseName)) {
             this.addError(ErrorsCodes.identifierAlreadyUsed, `Variable '${lowerCaseName}' already declared.`, treeNode === null ? type : treeNode);
         } else {
             let variable = null;
             let resolvedType = this.resolveNamedType(type);
 
-            if (resolvedType instanceof ScalarType ||
-                resolvedType instanceof ParametersList) {
+            if (resolvedType instanceof ScalarType) {
                 variable = new ScalarVariable(value, resolvedType.typeId);
             }
 
@@ -118,6 +119,37 @@ export class Scope
             return this.types[lowerCaseName];
         } else {
             this.addError(ErrorsCodes.typeNotDeclared, `Type '${lowerCaseName}' not declared.`, treeNode);
+        }
+    }
+
+    getParametersList()
+    {
+        return this.parametersList;
+    }
+
+    setParametersList(ParametersList)
+    {
+        this.parametersList = ParametersList;
+    }
+
+    addConstant(constantDeclaration)
+    {
+        let name = constantDeclaration.identifier.symbol.stringValue;
+        let type = constantDeclaration.type;
+        let value = constantDeclaration.value;
+        let lowerCaseName = name.toLowerCase();
+        if (this.constants.hasOwnProperty(lowerCaseName)) {
+            this.addError(ErrorsCodes.identifierAlreadyUsed, `Constant '${lowerCaseName}' already declared.`, constantDeclaration);
+        } else {
+            let constant = null;
+            let resolvedType = this.resolveNamedType(type);
+
+            if (resolvedType === null ||
+                resolvedType instanceof ScalarType) {
+                constant = new ScalarVariable(value, type ? resolvedType.typeId : value.typeId);
+            }
+
+            this.constants[lowerCaseName] = constant;
         }
     }
 }

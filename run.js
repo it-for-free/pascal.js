@@ -20,10 +20,11 @@ var symbol = null;
 var syntaxAnalyzer = new SyntaxAnalyzer(lexicalAnalyzer);
 try {
     var tree = syntaxAnalyzer.analyze();
-    //console.dir(tree, { depth: null });
+//    console.dir(tree.constants, { depth: null });
 
     var engine = new Engine(tree, config);
     engine.run();
+//    console.dir(engine.scopes, { depth: null });
 } catch (e) {
     if (e instanceof RuntimeError) {
         fileIO.printListing(e);

@@ -11,8 +11,8 @@ export class Ord extends FunctionItem
 
     innerRun(scope)
     {
-        let parametersList = scope.getVariable('parametersList');
-        let charParameter = parametersList.value[0];
+        let parametersList = scope.getParametersList();
+        let charParameter = parametersList[0];
         let char = charParameter.value;
         let code = char.charCodeAt(0);
 
