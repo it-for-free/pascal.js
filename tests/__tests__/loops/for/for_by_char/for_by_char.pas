@@ -1,11 +1,11 @@
 var a, b, d, e, c: char;
 begin
-   for c := 'A' to 'B' do
+   for c := 'A' to 'Z' do
    begin
       a := c;
    end;
 
-  (* for c := 'a' to 'E' do
+   for c := 'A' to 'e' do
    begin
       b := c;
    end;
@@ -18,5 +18,5 @@ begin
    for c := 'Z' downto 'A' do
    begin
       e := c;
-   end; *)
+   end; 
 end.
