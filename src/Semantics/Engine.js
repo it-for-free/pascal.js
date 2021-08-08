@@ -156,10 +156,10 @@ export class Engine
             let identifier = sentence.destination.symbol.stringValue;
             let sourceExpression = sentence.sourceExpression;
             let expressionResult = this.evaluateExpression(sourceExpression);
-            let typeId = expressionResult.typeId;
+            let type = expressionResult.getType();
             let value = expressionResult.value;
 
-            currentScope.setValue(identifier, typeId, value, sentence.destination);
+            currentScope.setValue(identifier, type, value, sentence.destination);
         } else if (sentence instanceof CompoundOperator) {
             if (sentence.sentences) {
                 let sentences = sentence.sentences;
@@ -280,54 +280,95 @@ export class Engine
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
-            let result = leftOperand.value === rightOperand.value;
+            let result = null;
+            if (leftOperand.typeId === TypesIds.ENUM &&
+                rightOperand.typeId === TypesIds.ENUM &&
+                Object.is(leftOperand.type, rightOperand.type)) {
+                result = leftOperand.getIndex() !== rightOperand.getIndex();
+            } else {
+                result = leftOperand.value === rightOperand.value;
+            }
 
             return new ScalarVariable(result, typeId);
         } else if (expression instanceof Greater) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
-            let result = leftOperand.typeId === TypesIds.CHAR &&
-                        rightOperand.typeId === TypesIds.CHAR ?
-                leftOperand.value.charCodeAt(0) > rightOperand.value.charCodeAt(0) :
-                leftOperand.value > rightOperand.value;
-
+            let result = null;
+            if (leftOperand.typeId === TypesIds.CHAR &&
+                rightOperand.typeId === TypesIds.CHAR) {
+                result = leftOperand.value.charCodeAt(0) > rightOperand.value.charCodeAt(0);
+            } else if(  leftOperand.typeId === TypesIds.ENUM &&
+                        rightOperand.typeId === TypesIds.ENUM &&
+                        Object.is(leftOperand.type, rightOperand.type)) {
+                result = leftOperand.getIndex() > rightOperand.getIndex();
+            } else {
+                result = leftOperand.value > rightOperand.value;
+            }
             return new ScalarVariable(result, typeId);
         } else if (expression instanceof Less) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
-            let result =  leftOperand.typeId === TypesIds.CHAR &&
-                        rightOperand.typeId === TypesIds.CHAR ?
-                leftOperand.value.charCodeAt(0) < rightOperand.value.charCodeAt(0) :
-                leftOperand.value < rightOperand.value;
+            let result = null;
+            if (leftOperand.typeId === TypesIds.CHAR &&
+                rightOperand.typeId === TypesIds.CHAR) {
+                result = leftOperand.value.charCodeAt(0) < rightOperand.value.charCodeAt(0);
+            } else if(  leftOperand.typeId === TypesIds.ENUM &&
+                        rightOperand.typeId === TypesIds.ENUM &&
+                        Object.is(leftOperand.type, rightOperand.type)) {
+                result = leftOperand.getIndex() < rightOperand.getIndex();
+            } else {
+                result = leftOperand.value < rightOperand.value;
+            }
 
             return new ScalarVariable(result, typeId);
         } else if (expression instanceof GreaterOrEqual) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
-            let result =  leftOperand.typeId === TypesIds.CHAR &&
-                        rightOperand.typeId === TypesIds.CHAR ?
-                leftOperand.value.charCodeAt(0) >= rightOperand.value.charCodeAt(0) :
-                leftOperand.value >= rightOperand.value;
+            let result = null;
+            if (leftOperand.typeId === TypesIds.CHAR &&
+                rightOperand.typeId === TypesIds.CHAR) {
+                result = leftOperand.value.charCodeAt(0) >= rightOperand.value.charCodeAt(0);
+            } else if(  leftOperand.typeId === TypesIds.ENUM &&
+                        rightOperand.typeId === TypesIds.ENUM &&
+                        Object.is(leftOperand.type, rightOperand.type)) {
+                result = leftOperand.getIndex() >= rightOperand.getIndex();
+            } else {
+                result = leftOperand.value >= rightOperand.value;
+            }
 
             return new ScalarVariable(result, typeId);
         } else if (expression instanceof LessOrEqual) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
-            let result =  leftOperand.typeId === TypesIds.CHAR &&
-                        rightOperand.typeId === TypesIds.CHAR ?
-                leftOperand.value.charCodeAt(0) <= rightOperand.value.charCodeAt(0) :
-                leftOperand.value <= rightOperand.value;
+            let result = null;
+            if (leftOperand.typeId === TypesIds.CHAR &&
+                rightOperand.typeId === TypesIds.CHAR) {
+                result = leftOperand.value.charCodeAt(0) <= rightOperand.value.charCodeAt(0);
+            } else if(  leftOperand.typeId === TypesIds.ENUM &&
+                        rightOperand.typeId === TypesIds.ENUM &&
+                        Object.is(leftOperand.type, rightOperand.type)) {
+                result = leftOperand.getIndex() <= rightOperand.getIndex();
+            } else {
+                result = leftOperand.value <= rightOperand.value;
+            }
 
             return new ScalarVariable(result, typeId);
         } else if (expression instanceof NotEqual) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
-            let result = leftOperand.value !== rightOperand.value;
+            let result = null;
+            if (leftOperand.typeId === TypesIds.ENUM &&
+                rightOperand.typeId === TypesIds.ENUM &&
+                Object.is(leftOperand.type, rightOperand.type)) {
+                result = leftOperand.getIndex() !== rightOperand.getIndex();
+            } else {
+                result = leftOperand.value !== rightOperand.value;
+            }
 
             return new ScalarVariable(result, typeId);
         } else if (expression instanceof In) {
@@ -421,13 +462,10 @@ export class Engine
     evaluateMultiplier(expression)
     {
         if (expression instanceof Constant) {
-            return new ScalarVariable(expression.symbol.value, this.getConstantTypeId(expression));
+            return new ScalarVariable(expression.symbol.value, expression.typeId);
         } else if (expression instanceof Identifier) {
             let currentScope = this.getCurrentScope();
-            let name = expression.symbol.value;
-            let foundVariable = currentScope.getVariable(name);
-
-            return new ScalarVariable(foundVariable.value, foundVariable.typeId);
+            return currentScope.getElementByIdentifier(expression);
         } else if (expression instanceof FunctionCall) {
 
             let functionName = expression.identifier.symbol.value;
@@ -467,24 +505,6 @@ export class Engine
         } else {
             return this.evaluateExpression(expression);
         }
-    }
-
-    getConstantTypeId(constant)
-    {
-        if (constant instanceof Constant) {
-            let symbol = constant.symbol;
-            if (symbol instanceof NmbFloat) {
-                return TypesIds.REAL;
-            } else if (symbol instanceof NmbInt) {
-                return TypesIds.INTEGER;
-            } else if (symbol instanceof OneSymbol) {
-                return TypesIds.CHAR;
-            } else if (symbol instanceof StringConstant) {
-                return TypesIds.STRING;
-            }
-        }
-
-        return null;
     }
 
     addError(errorCode, errorText = null, treeNode = null)

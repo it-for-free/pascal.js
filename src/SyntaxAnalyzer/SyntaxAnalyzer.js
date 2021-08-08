@@ -152,8 +152,8 @@ export class SyntaxAnalyzer
 
     typePart()
     {
+        this.tree.types = [];
         if (this.symbol.symbolCode === SymbolsCodes.typeSy) {
-            this.tree.types = [];
             this.nextSym();
             do {
                 let identSymbol = this.symbol;

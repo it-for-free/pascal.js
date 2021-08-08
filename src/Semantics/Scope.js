@@ -1,10 +1,13 @@
 import { TypesIds } from './Variables/TypesIds';
 import { ScalarVariable } from './Variables/ScalarVariable';
+import { EnumVariable } from './Variables/EnumVariable';
 import { RuntimeError } from '../Errors/RuntimeError';
 import { ErrorsDescription } from '../Errors/ErrorsDescription';
 import { ErrorsCodes } from '../Errors/ErrorsCodes';
 import { ScalarType } from '../SyntaxAnalyzer/Tree/Types/ScalarType';
 import { AppliedNamedType } from '../SyntaxAnalyzer/Tree/Types/AppliedNamedType';
+import { EnumType } from '../SyntaxAnalyzer/Tree/Types/EnumType';
+import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
 
 
 export class Scope
@@ -14,6 +17,7 @@ export class Scope
         this.parentScope = parentScope;
         this.items = {};
         this.constants = {};
+        this.enumsItems = {};
         this.types = {};
         this.cycleDepth = 0;
         this.errorsDescription = new ErrorsDescription;
@@ -33,6 +37,8 @@ export class Scope
 
             if (resolvedType instanceof ScalarType) {
                 variable = new ScalarVariable(value, resolvedType.typeId);
+            } else if (resolvedType instanceof EnumType) {
+                variable = new EnumVariable(value, resolvedType);
             }
 
             this.items[lowerCaseName] = variable;
@@ -82,11 +88,29 @@ export class Scope
         }
     }
 
+    getElementByIdentifier(identifier)
+    {
+        if (identifier instanceof Identifier) {
+            let name = identifier.symbol.value;
+            let lowerCaseName = name.toLowerCase();
+
+            if (this.constants.hasOwnProperty(lowerCaseName)) {
+                return this.constants[lowerCaseName];
+            } else if (this.items.hasOwnProperty(lowerCaseName)) {
+                return this.items[lowerCaseName];
+            } else if (this.enumsItems.hasOwnProperty(lowerCaseName)) {
+                return this.enumsItems[lowerCaseName];
+            }
+        }
+    }
+
     sameType(typeA, typeB)
     {
         if (typeA.constructor === typeB.constructor) {
             if (typeA instanceof ScalarType) {
                 return typeA.typeId === typeB.typeId;
+            } else if (typeA instanceof EnumType) {
+                return Object.is(typeA, typeB);
             }
         } else {
             return false;
@@ -109,6 +133,16 @@ export class Scope
             this.addError(ErrorsCodes.identifierAlreadyUsed, `Type '${lowerCaseName}' already declared.`, typeDeclaration);
         } else {
             this.types[lowerCaseName] = typeDeclaration.type;
+            if (typeDeclaration.type instanceof EnumType) {
+                let self = this;
+                typeDeclaration.type.items.forEach(function(enumItem) {
+                    let lowerCaseName = enumItem.symbol.stringValue.toLowerCase();
+                    if (self.enumsItems.hasOwnProperty(lowerCaseName)) {
+                        self.addError(ErrorsCodes.identifierAlreadyUsed, `Enumeration item '${lowerCaseName}' already declared.`, enumItem);
+                    }
+                    self.enumsItems[lowerCaseName] = new EnumVariable(enumItem, typeDeclaration.type);
+                });
+            }
         }
     }
 
@@ -146,7 +180,7 @@ export class Scope
 
             if (resolvedType === null ||
                 resolvedType instanceof ScalarType) {
-                constant = new ScalarVariable(value, type ? resolvedType.typeId : value.typeId);
+                constant = new ScalarVariable(value.symbol.value, type ? resolvedType.typeId : value.typeId);
             }
 
             this.constants[lowerCaseName] = constant;
