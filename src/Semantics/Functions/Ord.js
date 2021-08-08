@@ -1,12 +1,13 @@
 import { FunctionItem } from '../FunctionItem';
 import { TypesIds } from '../../Semantics/Variables/TypesIds';
+import { ScalarType } from '../../SyntaxAnalyzer/Tree/Types/ScalarType'
 
 export class Ord extends FunctionItem
 {
     constructor()
     {
         super();
-        this.returnType = {typeId: TypesIds.INTEGER};
+        this.returnType = new ScalarType(null, TypesIds.INTEGER);
     }
 
     innerRun(scope)
