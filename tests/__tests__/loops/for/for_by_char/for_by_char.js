@@ -1,7 +1,7 @@
 
 import { runFile, insp } from '../../../../testsHelper';
 
-let pjs = runFile(import.meta.url, 'for_base.pas');
+let pjs = runFile(import.meta.url, 'for_by_char.pas');
 
 test(`for loop by char "for c := 'A' to 'Z'" `, () => { 
     expect(pjs.getVarValue('a')).toBe('Z');
