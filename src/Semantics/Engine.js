@@ -480,7 +480,7 @@ export class Engine
 
             let scope = new Scope();
 
-            scope.addVariable(functionName, calledFunction.returnType.typeId);
+            scope.addVariable(functionName, calledFunction.returnType);
             this.addParametersToScope(expression.parameters, calledFunction.signature, scope);
             this.treesCounter++;
             this.tree = calledFunction;
