@@ -1,4 +1,9 @@
-export class TextPosition
+export interface TextPosition {
+    lineNumber: number;
+    charNumber: number;
+}
+
+export class TextPosition implements TextPosition
 {
     constructor(lineNumber = 0, charNumber = 0)
     {
