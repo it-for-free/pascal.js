@@ -1,5 +1,6 @@
 import { Scope } from './Scope';
 import { ScalarVariable } from './Variables/ScalarVariable';
+import { EnumVariable } from './Variables/EnumVariable';
 import { TypesIds } from './Variables/TypesIds';
 import { VariablesDeclaration } from '../SyntaxAnalyzer/Tree/VariablesDeclaration';
 import { TypeDeclaration } from '../SyntaxAnalyzer/Tree/TypeDeclaration';
@@ -233,14 +234,91 @@ export class Engine
             currentScope.cycleDepth--;
         } else if (sentence instanceof ForCycle) {
             let currentScope = this.getCurrentScope();
+            let variableName = sentence.variableIdentifier.symbol.stringValue;
+            let currentValue = this.evaluateExpression(sentence.initExpression);
+            let lastValue = this.evaluateExpression(sentence.lastExpression);
+
+            let increment = null;
+            let comparation = null;
+            let typeId = currentValue.typeId;
+            let type = currentValue.type === false ? typeId : currentValue.type;
+            currentScope.setValue(variableName, type, currentValue.value);
+            if (sentence.countDown) {
+                switch (typeId) {
+                    case TypesIds.INTEGER:
+                        increment = function(elem) {
+                            elem.value--;
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.value >= rightElem.value;
+                        break;
+                    case TypesIds.CHAR:
+                        increment = function(elem) {
+                            let code = elem.value.charCodeAt(0);
+                            code--;
+                            elem.value = String.fromCharCode(code);
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.value.charCodeAt(0) >= rightElem.value.charCodeAt(0);
+                        break;
+                    case TypesIds.ENUM:
+                        increment = function(elem) {
+                            let items = elem.type.items;
+                            let len = items.length;
+                            let index = elem.getIndex();
+                            index--;
+                            elem.value = items[(index + len) % len];
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.getIndex() >= rightElem.getIndex();
+                        break;
+                }
+            } else {
+                switch (typeId) {
+                    case TypesIds.INTEGER:
+                        increment = function(elem) {
+                            elem.value++;
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.value <= rightElem.value;
+                        break;
+                    case TypesIds.CHAR:
+                        increment = function(elem) {
+                            let code = elem.value.charCodeAt(0);
+                            code++;
+                            elem.value = String.fromCharCode(code);
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.value.charCodeAt(0) <= rightElem.value.charCodeAt(0);
+                        break;
+                    case TypesIds.ENUM:
+                        increment = function(elem) {
+                            let items = elem.type.items;
+                            let len = items.length;
+                            let index = elem.getIndex();
+                            index++;
+                            elem.value = items[index % len];
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.getIndex() <= rightElem.getIndex();
+                        break;
+                }
+            }
             currentScope.cycleDepth++;
             this.evaluateSentence(sentence.init);
-            while (this.evaluateExpression(sentence.condition).value === true) {
+            let previousVal = typeId === TypesIds.ENUM ?
+                new EnumVariable(currentValue.value, type) :
+                new ScalarVariable(currentValue.value, typeId);
+            let canContinue = true;
+            while (comparation(currentValue, lastValue) && canContinue) {
                 let result = this.evaluateSentence(sentence.body);
                 if (result instanceof Break) {
                     break;
                 }
-                this.evaluateSentence(sentence.operation);
+                previousVal.value = currentValue.value;
+                currentValue = increment(currentValue);
+                currentScope.setValue(variableName, type, currentValue.value);
+                canContinue = comparation(previousVal, currentValue);
             }
             currentScope.cycleDepth--;
         } else if (sentence instanceof Break) {

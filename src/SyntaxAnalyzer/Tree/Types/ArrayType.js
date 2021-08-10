@@ -3,11 +3,12 @@ import { TypesIds } from '../../../Semantics/Variables/TypesIds';
 
 export class ArrayType extends TypeBase
 {
-    constructor(symbol, typeOfElements = null, indexFrom = null, indexTo = null)
+    constructor(symbol, leftIndex = null, rightIndex = null, typeOfElements = null)
     {
         super(symbol, TypesIds.ARRAY);
         this.typeOfElements = typeOfElements;
-        this.indexFrom = indexFrom;
-        this.indexTo = indexTo;
+        this.leftIndex = leftIndex;
+        this.rightIndex = rightIndex;
+        this.typeOfElements = typeOfElements;
     }
 }

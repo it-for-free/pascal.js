@@ -40,6 +40,7 @@ import { ProcedureType } from './Tree/Types/ProcedureType';
 import { TypeApplied } from './Tree/ParametersList/TypeApplied';
 import { TypesIds } from '../Semantics/Variables/TypesIds';
 import { EnumType } from './Tree/Types/EnumType';
+import { ArrayType } from './Tree/Types/ArrayType';
 import { WhileCycle } from './Tree/Loops/WhileCycle';
 import { RepeatCycle } from './Tree/Loops/RepeatCycle';
 import { ForCycle } from './Tree/Loops/ForCycle';
@@ -247,8 +248,14 @@ export class SyntaxAnalyzer
             typeSymbol = this.symbol;
             this.nextSym();
             this.accept(SymbolsCodes.lBracket);
-
+            let leftIndex = this.scanConstant();
+            this.accept(SymbolsCodes.twoPoints);
+            let rightIndex = this.scanConstant();
             this.accept(SymbolsCodes.rBracket);
+            this.accept(SymbolsCodes.ofSy);
+            let elemsType = this.scanType();
+
+            return new ArrayType(typeSymbol, leftIndex, rightIndex, elemsType);
         } else if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
             let enumType = new EnumType(this.symbol);
             let ident = null;
@@ -485,10 +492,9 @@ export class SyntaxAnalyzer
             let variable = new Identifier(identSymbol);
             let assignSymbol = this.symbol;
             this.accept(SymbolsCodes.assign);
+            let initExpression = this.scanSimpleExpression();
 
-            let init = new Assignation(assignSymbol, variable, this.scanSimpleExpression());
             let countDown = false;
-            let countSymbol = this.symbol;
             switch (this.symbol.symbolCode) {
                 case SymbolsCodes.downtoSy:
                     countDown = true;
@@ -502,45 +508,11 @@ export class SyntaxAnalyzer
             }
 
             this.nextSym();
-
-            let condition = countDown ?
-                new GreaterOrEqual(this.symbol, variable, this.scanSimpleExpression()) :
-                new LessOrEqual(this.symbol, variable, this.scanSimpleExpression());
-
+            let lastExpression = this.scanSimpleExpression();
             this.accept(SymbolsCodes.doSy);
             let body = this.scanSentence();
 
-            let variablesType = this.getVarTypeByIdentifier(identSymbol.value);
-            let operation = null;
-
-            let symbolCode = variablesType.symbol.symbolCode;
-            let unityConstant = new Constant(new NmbInt(countSymbol.textPosition, SymbolsCodes.intC, '1'));
-            switch (symbolCode) {
-                case SymbolsCodes.integerSy:
-                    operation = new Assignation(
-                        assignSymbol,
-                        variable,
-                        countDown ?
-                        new Subtraction(countSymbol, variable, unityConstant) :
-                        new Addition(countSymbol, variable, unityConstant)
-                    );
-                    break;
-                case SymbolsCodes.charSy:
-                    let chrName = new Identifier( new Symbol(countSymbol.textPosition, SymbolsCodes.ident, 'chr'));
-                    let ordName = new Identifier( new Symbol(countSymbol.textPosition, SymbolsCodes.ident, 'ord'));
-                    operation = new Assignation(
-                        assignSymbol,
-                        variable,
-                        new FunctionCall(null, chrName, [
-                            countDown ?
-                            new Subtraction(countSymbol, new FunctionCall(null, ordName, [variable]), unityConstant) :
-                            new Addition(countSymbol, new FunctionCall(null, ordName, [variable]), unityConstant)
-                        ])
-                    );
-                    break;
-            }
-
-            return new ForCycle(forSymbol, init, condition, operation, body);
+            return new ForCycle(forSymbol, variable, initExpression, lastExpression, countDown, body);
         } else if (this.symbol.symbolCode === SymbolsCodes.breakSy) {
             let breakSymbol = this.symbol;
             this.nextSym();
@@ -818,6 +790,7 @@ export class SyntaxAnalyzer
             case SymbolsCodes.charC:
             case SymbolsCodes.stringC:
             case SymbolsCodes.booleanC:
+            case SymbolsCodes.ident:
                 constant = new Constant(this.symbol);
                 this.nextSym();
         }
@@ -832,19 +805,5 @@ export class SyntaxAnalyzer
     addError(errorCode, errorText = null, symbol)
     {
         this.lexicalAnalyzer.fileIO.addError(errorCode, errorText, symbol.textPosition);
-    }
-
-    getVarTypeByIdentifier(variableName)
-    {
-        let variablesType = null;
-        this.tree.vars.forEach( function (varDeclaration) {
-            varDeclaration.identifiers.forEach( function (identifier) {
-                if (identifier.symbol.value === variableName) {
-                    variablesType = varDeclaration.variablesType;
-                }
-            });
-        });
-
-        return variablesType;
     }
 };
