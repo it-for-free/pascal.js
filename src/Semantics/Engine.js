@@ -378,7 +378,7 @@ export class Engine
             if (leftOperand.typeId === TypesIds.ENUM &&
                 rightOperand.typeId === TypesIds.ENUM &&
                 Object.is(leftOperand.type, rightOperand.type)) {
-                result = leftOperand.getIndex() !== rightOperand.getIndex();
+                result = leftOperand.getIndex() === rightOperand.getIndex();
             } else {
                 result = leftOperand.value === rightOperand.value;
             }
