@@ -22,6 +22,7 @@ export class LexicalAnalyzer
 
         this.MAX_IDENT = 64;
         this.keyWords = new KeyWords();
+        this.wordBuffer = null;
     }
 
     nextSym()
@@ -42,7 +43,12 @@ export class LexicalAnalyzer
             return null;
         }
 
-        this.currentWord = '';
+        if (this.wordBuffer === null) {
+            this.currentWord = '';
+        } else {
+            this.currentWord = this.wordBuffer;
+            this.wordBuffer = null;
+        }
 
         // <letter>
         if (/[a-z]/i.exec(this.char) !== null) {
@@ -60,7 +66,10 @@ export class LexicalAnalyzer
             this.currentWord += this.char;
             this.char = this.fileIO.nextCh();
 
-            if (this.currentWord === '.' && this.char === '.') {
+            if (this.currentWord === '..') {
+                this.symbol = SymbolsCodes.twoPoints;
+                return this.getSymbol(this.symbol);
+            } else if (this.currentWord === '.' && this.char === '.') {
 
                 this.currentWord += this.char;
                 this.char = this.fileIO.nextCh();
@@ -72,16 +81,20 @@ export class LexicalAnalyzer
                 return this.getSymbol(this.symbol);
             } else {
                 let pointPresence = this.currentWord === '.';
-
+                let previousChar = null;
                 while (/[\d.]/.exec(this.char) !== null) {
                     if (this.char === '.') {
                         if (!pointPresence) {
                             pointPresence = true;
                         } else {
+                            if (previousChar === '.') {
+                                this.wordBuffer = '.';
+                                return new NmbInt(this.token, SymbolsCodes.intC, this.currentWord);
+                            }
                             break;
                         }
                     }
-
+                    previousChar = this.char;
                     this.currentWord += this.char;
                     this.char = this.fileIO.nextCh();
                 }
