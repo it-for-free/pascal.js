@@ -71,7 +71,7 @@ export class LexicalAnalyzer
                 this.symbol = SymbolsCodes.point;
                 return this.getSymbol(this.symbol);
             } else {
-                var pointPresence = this.currentWord === '.';
+                let pointPresence = this.currentWord === '.';
 
                 while (/[\d.]/.exec(this.char) !== null) {
                     if (this.char === '.') {

@@ -3,6 +3,9 @@ import { SymbolsCodes } from '../LexicalAnalyzer/SymbolsCodes';
 import { SymbolsDescription } from '../LexicalAnalyzer/SymbolsDescription';
 import { Assignation } from './Tree/Assignation';
 import { TakeElemByKeys } from './Tree/TakeElemByKeys';
+import { IndexedIdentifier } from './Tree/Arrays/IndexedIdentifier';
+import { IndexedFunctionCall } from './Tree/Arrays/IndexedFunctionCall';
+import { IndexRing } from './Tree/Arrays/IndexRing';
 import { GetByPointer } from './Tree/GetByPointer';
 import { TakeField } from './Tree/TakeField';
 import { Multiplication } from './Tree/Multiplication';
@@ -541,19 +544,45 @@ export class SyntaxAnalyzer
         return compoundOperator;
     }
 
+    scanIndicesBrackets(indexSymbol)
+    {
+        this.accept(SymbolsCodes.lBracket);
+        let rootIndexRing = new IndexRing(indexSymbol, this.scanExpression());
+
+        while (this.symbol.symbolCode === SymbolsCodes.comma) {
+            let commaSymbol = this.symbol;
+            this.nextSym();
+            let currentIndexRing =  new IndexRing(commaSymbol, this.scanExpression());
+            rootIndexRing.appendIndexRing(currentIndexRing);
+        }
+
+        this.accept(SymbolsCodes.rBracket);
+
+        return rootIndexRing;
+    }
+
+    scanIndices(indexSymbol)
+    {
+        let lBracket = this.symbol;
+        let rootIndexRing = this.scanIndicesBrackets(this.symbol);
+
+        while (this.symbol.symbolCode === SymbolsCodes.lBracket) {
+            let lBracketSymbol = this.symbol;
+            let currentIndexRing = this.scanIndicesBrackets(lBracketSymbol);
+            rootIndexRing.appendIndexRing(currentIndexRing);
+        }
+
+        return rootIndexRing;
+    }
+
     /** Синтаксическая диаграмма "переменная" */
     scanVariable(ident)
     {
         switch(this.symbol.symbolCode) {
             case SymbolsCodes.lBracket:
                 let lBracket = this.symbol;
-                let keys = [];
-                do {
-                    this.nextSym();
-                    keys.push(this.scanExpression());
-                } while (this.symbol.symbolCode === SymbolsCodes.comma)
-                this.accept(SymbolsCodes.rBracket);
-                return new TakeElemByKeys(lBracket, ident, keys);
+                let identifier = new Identifier(ident);
+                return new IndexedIdentifier(lBracket, identifier, this.scanIndices());
 
             case SymbolsCodes.point:
                 let point = null;
@@ -707,12 +736,20 @@ export class SyntaxAnalyzer
                     this.nextSym();
                     let parameters = this.scanParameters();
 
-                    return new FunctionCall(leftParSymbol, variable, parameters);
+                    let functionCall = new FunctionCall(leftParSymbol, variable, parameters);
+
+                    if (this.symbol.symbolCode === SymbolsCodes.lBracket) {
+                        let lBracket = this.symbol;
+                        return new IndexedFunctionCall(lBracket, functionCall, this.scanIndices());
+                    } else {
+                        return functionCall;
+                    }
                 } else {
                     return variable;
                 }
+            } else if (variable instanceof IndexedIdentifier) {
+                return variable;
             }
-
         } else if ( this.symbol.symbolCode === SymbolsCodes.floatC ||
                     this.symbol.symbolCode === SymbolsCodes.intC ||
                     this.symbol.symbolCode === SymbolsCodes.stringC ||

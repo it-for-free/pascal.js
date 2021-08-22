@@ -9,6 +9,5 @@ export class ArrayType extends TypeBase
         this.typeOfElements = typeOfElements;
         this.leftIndex = leftIndex;
         this.rightIndex = rightIndex;
-        this.typeOfElements = typeOfElements;
     }
 }

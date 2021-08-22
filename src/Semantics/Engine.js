@@ -44,6 +44,9 @@ import { RuntimeError } from '../Errors/RuntimeError';
 import { ErrorsDescription } from '../Errors/ErrorsDescription';
 import { ErrorsCodes } from '../Errors/ErrorsCodes';
 import { Break } from  '../SyntaxAnalyzer/Tree/Break';
+import { IndexedIdentifier } from '../SyntaxAnalyzer/Tree/Arrays/IndexedIdentifier';
+import { IndexedFunctionCall } from '../SyntaxAnalyzer/Tree/Arrays/IndexedFunctionCall';
+import { IndexRing } from '../SyntaxAnalyzer/Tree/Arrays/IndexRing';
 
 export class Engine
 {
@@ -149,18 +152,31 @@ export class Engine
         }
     }
 
+    evaluateIndexRing(indexRing)
+    {
+        indexRing.indexExpression = this.evaluateExpression(indexRing.indexExpression);
+        if (indexRing.indexRing instanceof IndexRing) {
+            this.evaluateIndexRing(indexRing.indexRing);
+        }
+
+        return indexRing;
+    }
+
     evaluateSentence(sentence)
     {
         let currentScope = this.getCurrentScope();
 
         if (sentence instanceof Assignation) {
-            let identifier = sentence.destination.symbol.stringValue;
+            let destination = sentence.destination;
             let sourceExpression = sentence.sourceExpression;
             let expressionResult = this.evaluateExpression(sourceExpression);
             let type = expressionResult.getType();
             let value = expressionResult.value;
+            if (destination instanceof IndexedIdentifier) {
+                destination.indexRing = this.evaluateIndexRing(destination.indexRing);
+            }
 
-            currentScope.setValue(identifier, type, value, sentence.destination);
+            currentScope.setValue(destination, type, value, sentence.destination);
         } else if (sentence instanceof CompoundOperator) {
             if (sentence.sentences) {
                 let sentences = sentence.sentences;
@@ -234,7 +250,7 @@ export class Engine
             currentScope.cycleDepth--;
         } else if (sentence instanceof ForCycle) {
             let currentScope = this.getCurrentScope();
-            let variableName = sentence.variableIdentifier.symbol.stringValue;
+            let variableIdentifier = sentence.variableIdentifier;
             let currentValue = this.evaluateExpression(sentence.initExpression);
             let lastValue = this.evaluateExpression(sentence.lastExpression);
 
@@ -242,7 +258,7 @@ export class Engine
             let comparation = null;
             let typeId = currentValue.typeId;
             let type = currentValue.type === false ? typeId : currentValue.type;
-            currentScope.setValue(variableName, type, currentValue.value);
+            currentScope.setValue(variableIdentifier, type, currentValue.value);
             if (sentence.countDown) {
                 switch (typeId) {
                     case TypesIds.INTEGER:
@@ -317,7 +333,7 @@ export class Engine
                 }
                 previousVal.value = currentValue.value;
                 currentValue = increment(currentValue);
-                currentScope.setValue(variableName, type, currentValue.value);
+                currentScope.setValue(variableIdentifier, type, currentValue.value);
                 canContinue = comparation(previousVal, currentValue);
             }
             currentScope.cycleDepth--;
@@ -345,7 +361,7 @@ export class Engine
                     let typeId = appliedType.typeId;
                     let value = parametersValues[parametersCounter].value;
                     scope.addVariable(variableName, typeId);
-                    scope.setValue(variableName, typeId, value);
+                    scope.setValue(identifier, typeId, value);
                     parametersCounter++;
                 });
             });
@@ -544,6 +560,10 @@ export class Engine
         } else if (expression instanceof Identifier) {
             let currentScope = this.getCurrentScope();
             return currentScope.getElementByIdentifier(expression);
+        } else if (expression instanceof IndexedIdentifier) {
+            let currentScope = this.getCurrentScope();
+            expression.indexRing = this.evaluateIndexRing(expression.indexRing);
+            return currentScope.getElementByIndexedIdentifier(expression);
         } else if (expression instanceof FunctionCall) {
 
             let functionName = expression.identifier.symbol.value;

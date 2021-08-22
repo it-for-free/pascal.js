@@ -7,5 +7,6 @@ export const ErrorsCodes = {
     variableNotDeclared: 107,
     constantOrVariableNotDeclared: 108,
     typesMismatch: 109,
-    typeNotDeclared: 108,
+    typeNotDeclared: 110,
+    indexIsOutOfRange: 111,
 }
