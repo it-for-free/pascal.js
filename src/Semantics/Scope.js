@@ -295,4 +295,25 @@ export class Scope
             this.constants[lowerCaseName] = constant;
         }
     }
+
+    getVariableByReference(variableIdentifier)
+    {
+        let name = variableIdentifier.symbol.value;
+        let lowerCaseName = name.toLowerCase();
+
+        if (!this.items.hasOwnProperty(lowerCaseName)) {
+            this.addError(ErrorsCodes.variableNotDeclared, `Variable '${lowerCaseName}' not declared.`, treeNode);
+        } else {
+            return this.items[lowerCaseName];
+        }
+    }
+
+    addVariableByReference(variableIdentifier, parameterIdentifier)
+    {
+        let name = parameterIdentifier.symbol.value;
+        let lowerCaseName = name.toLowerCase();
+
+        let variable = this.parentScope.getVariableByReference(variableIdentifier);
+        this.items[lowerCaseName] = variable;
+    }
 }

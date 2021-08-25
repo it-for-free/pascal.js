@@ -25,7 +25,7 @@ try {
     var engine = new Engine(tree, config);
     engine.run();
 //    console.dir(engine.scopes, { depth: null });
-//    console.dir(engine.scopes[0].items.f, { depth: null });
+//    console.dir(engine.scopes[0].items, { depth: null });
 } catch (e) {
     if (e instanceof RuntimeError) {
         fileIO.printListing(e);

@@ -9,4 +9,5 @@ export const ErrorsCodes = {
     typesMismatch: 109,
     typeNotDeclared: 110,
     indexIsOutOfRange: 111,
+    identifierExpected: 112,
 }
