@@ -662,7 +662,7 @@ export class SyntaxAnalyzer
         while ( this.symbol !== null && (
                     this.symbol.symbolCode === SymbolsCodes.plus ||
                     this.symbol.symbolCode === SymbolsCodes.minus ||
-                    this.symbol.symbolCode === SymbolsCodes.or
+                    this.symbol.symbolCode === SymbolsCodes.orSy
                 )) {
 
             switch (this.symbol.symbolCode) {
@@ -674,7 +674,7 @@ export class SyntaxAnalyzer
                     this.nextSym();
                     term = new Subtraction(this.symbol, term, this.scanTerm());
                     break;
-                case SymbolsCodes.orSym:
+                case SymbolsCodes.orSy:
                     this.nextSym();
                     term = new LogicalOr(this.symbol, term, this.scanTerm());
                     break;
