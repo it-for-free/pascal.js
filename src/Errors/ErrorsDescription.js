@@ -15,6 +15,7 @@ export class ErrorsDescription
             [ErrorsCodes.variableNotDeclared, 'Variable not declared'],
             [ErrorsCodes.constantOrVariableNotDeclared, 'Constant or variable not declared'],
             [ErrorsCodes.typesMismatch, 'Types mismatch'],
+            [ErrorsCodes.identifierExpected, 'Identifier expected'],
         ]);
     }
 

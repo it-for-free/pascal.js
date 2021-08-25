@@ -209,7 +209,8 @@ export class Engine
                 this.addError(ErrorsCodes.nameNotDescribed, `Procedure '${procedureName}' is not declared!`, sentence.identifier);
             }
 
-            let scope = new Scope();
+            let currentScope = this.getCurrentScope();
+            let scope = new Scope(currentScope);
             this.addParametersToScope(sentence.parameters, procedure.signature, scope);
             this.treesCounter++;
             this.tree = procedure;
@@ -353,15 +354,25 @@ export class Engine
         if (signature.length === 0) {
             scope.setParametersList(parametersValues);
         } else {
+            let self = this;
             let parametersCounter = 0;
             signature.forEach(function(appliedType) {
                 let identifiers = appliedType.identifiers;
+                let byReference = appliedType.byReference;
                 identifiers.forEach(function(identifier) {
                     let variableName = identifier.symbol.value;
-                    let typeId = appliedType.typeId;
-                    let value = parametersValues[parametersCounter].value;
-                    scope.addVariable(variableName, typeId);
-                    scope.setValue(identifier, typeId, value);
+                    let type = appliedType.type;
+                    let parameter = parameters[parametersCounter];
+                    if (byReference) {
+                        if (!(parameter instanceof Identifier)) {
+                            self.addError(ErrorsCodes.identifierExpected, 'Cannot use other expressions here', parameter);
+                        }
+                        scope.addVariableByReference(parameter, identifier);
+                    } else {
+                        let result = self.evaluateExpression(parameter);
+                        scope.addVariable(variableName, type);
+                        scope.setValue(identifier, type, result.value, identifier);
+                    }
                     parametersCounter++;
                 });
             });
@@ -576,7 +587,8 @@ export class Engine
                 this.addError(ErrorsCodes.nameNotDescribed, `Function '${functionName}' is not declared!`, expression.identifier);
             }
 
-            let scope = new Scope();
+            let currentScope = this.getCurrentScope();
+            let scope = new Scope(currentScope);
 
             scope.addVariable(functionName, calledFunction.returnType);
             this.addParametersToScope(expression.parameters, calledFunction.signature, scope);
