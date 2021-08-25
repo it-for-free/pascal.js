@@ -1,5 +1,5 @@
 
-import { runFile, insp } from '../../../../testsHelper';
+import { runFile, insp } from '../../../../../testsHelper';
 
 let pjs = runFile(import.meta.url, 'for_by_char.pas');
 

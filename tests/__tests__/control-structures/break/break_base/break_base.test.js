@@ -1,6 +1,6 @@
 
-import { runFile, insp } from '../../../testsHelper';
-import { ErrorsCodes } from '../../../../src/Errors/ErrorsCodes';
+import { runFile, insp } from '../../../../testsHelper';
+import { ErrorsCodes } from '../../../../../src/Errors/ErrorsCodes';
 
 let pjs = runFile(import.meta.url, 'break_base.pas');
 
