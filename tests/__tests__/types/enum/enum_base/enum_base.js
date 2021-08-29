@@ -1,12 +1,12 @@
 
 import { runFile, insp } from '../../../../testsHelper';
 import { expect, test } from '@jest/globals';
-git 
+
 let pjs = runFile(import.meta.url, 'enum_base.pas');
 // insp(engine.scopes);
 
 test('a is "apple"', () => {
-  expect(pjs.getVarValue('a').symbol.stringValue).toBe('apple'); 
+  expect(pjs.getVarValue('a')).toBe('apple'); 
 });
 
 test('a > b', () => {

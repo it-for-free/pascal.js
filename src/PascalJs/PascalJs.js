@@ -55,8 +55,22 @@ export class PascalJs {
         
         if (variable.typeId === TypesIds.ARRAY) {
             return this.getVar(varName).items;
+        } else  if (variable.typeId === TypesIds.ENUM) {
+            return this.getVar(varName).value.symbol.stringValue;
         } else {
             return this.getVar(varName).value;
         }
     }
+
+    // getArrayValueForIndex(arrName, indices) {
+    //     let variable = this.getVar(arrName);
+        
+    //     if (variable.typeId === TypesIds.ARRAY) {
+    //         return this.getVar(varName).items;
+    //     } else {
+    //         return this.getVar(varName).value;
+    //     }
+    // }
+
+    // getIndexRingByPathByIndices
 }

@@ -316,7 +316,7 @@ export class Scope
         let lowerCaseName = name.toLowerCase();
 
         if (!this.items.hasOwnProperty(lowerCaseName)) {
-            this.addError(ErrorsCodes.variableNotDeclared, `Variable '${lowerCaseName}' not declared.`, treeNode);
+            this.addError(ErrorsCodes.variableNotDeclared, `Variable '${lowerCaseName}' not declared.`, variableIdentifier);
         } else {
             return this.items[lowerCaseName];
         }
