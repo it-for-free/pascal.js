@@ -24,6 +24,7 @@ import { Modulo } from '../SyntaxAnalyzer/Tree/Modulo';
 import { LogicalAnd } from '../SyntaxAnalyzer/Tree/LogicalAnd';
 import { LogicalOr } from '../SyntaxAnalyzer/Tree/LogicalOr';
 import { UnaryMinus } from '../SyntaxAnalyzer/Tree/UnaryMinus';
+import { Not } from '../SyntaxAnalyzer/Tree/Not';
 import { CompoundOperator } from '../SyntaxAnalyzer/Tree/CompoundOperator';
 import { Implication } from '../SyntaxAnalyzer/Tree/Implication';
 import { WhileCycle } from '../SyntaxAnalyzer/Tree/Loops/WhileCycle';
@@ -520,7 +521,10 @@ export class Engine
 
     evaluateTerm(expression)
     {
-        if (expression instanceof UnaryMinus) {
+        if (expression instanceof Not) {
+            let term = this.evaluateTerm(expression.value);
+            return new ScalarVariable(!term.value, term.typeId);
+        } else if (expression instanceof UnaryMinus) {
             let term = this.evaluateTerm(expression.value);
             return new ScalarVariable(-term.value, term.typeId);
         } else if (expression instanceof Multiplication) {

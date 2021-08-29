@@ -28,6 +28,7 @@ import { Modulo } from './Tree/Modulo';
 import { LogicalAnd } from './Tree/LogicalAnd';
 import { LogicalOr } from './Tree/LogicalOr';
 import { UnaryMinus } from './Tree/UnaryMinus';
+import { Not } from './Tree/Not';
 import { Program } from './Tree/Program';
 import { Procedure } from './Tree/Procedure';
 import { Function } from './Tree/Function';
@@ -645,18 +646,29 @@ export class SyntaxAnalyzer
     scanSimpleExpression()
     {
         let unaryMinus = false;
+        let not = false;
         let term = null;
+        let unaryOperationSymbol = null;
 
         switch (this.symbol.symbolCode) {
             case SymbolsCodes.minus:
                 unaryMinus = true;
             case SymbolsCodes.plus:
+                unaryOperationSymbol = this.symbol;
+                this.nextSym();
+                break;
+            case SymbolsCodes.notSy:
+                not = true;
+                unaryOperationSymbol = this.symbol;
                 this.nextSym();
         }
 
         term = this.scanTerm();
         if (unaryMinus) {
-            term = new UnaryMinus(this.symbol, term);
+            term = new UnaryMinus(unaryOperationSymbol, term);
+        }
+        if (not) {
+            term = new Not(unaryOperationSymbol, term);
         }
 
         while ( this.symbol !== null && (
