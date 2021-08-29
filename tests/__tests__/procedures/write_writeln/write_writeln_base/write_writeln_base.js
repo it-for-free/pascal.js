@@ -1,5 +1,6 @@
 
 import { runFile, insp } from '../../../../testsHelper';
+import { expect, test } from '@jest/globals';
 
 let pjs = runFile(import.meta.url, 'write_writeln_base.pas');
 // insp(pjs.engine.tree);

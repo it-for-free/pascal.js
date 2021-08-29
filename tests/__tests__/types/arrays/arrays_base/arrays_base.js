@@ -1,3 +1,4 @@
+// @ts-nocheck
 
 import { runFile, insp } from '../../../../testsHelper';
 

@@ -1,5 +1,6 @@
 
 import { runFile, insp } from '../../../../testsHelper';
+import { expect, test } from '@jest/globals';
 
 let pjs = runFile(import.meta.url, 'boolean_base_operations.pas');
 // insp(engine.scopes);

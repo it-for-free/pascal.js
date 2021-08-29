@@ -1,5 +1,6 @@
 
 import { runFile, insp } from '../../../../testsHelper';
+import { expect, test } from '@jest/globals';
 
 let pjs = runFile(import.meta.url, 'if_else_base.pas');
 // insp(engine.scopes);

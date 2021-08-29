@@ -1,6 +1,6 @@
 
 import { runFile, insp } from '../../../testsHelper';
-
+import { expect, test } from '@jest/globals';
 
 let pjs = runFile(import.meta.url, 'div_mod_base.pas');
 // insp(pjs);

@@ -13,7 +13,7 @@ export function getFullPath(ImportMetaUrlData, fileName) {
 /**
  * Распечатывает значения для отладки (с произвольной вложенностью)
  * 
- * @param {mixed} data 
+ * @param {*} data 
  */
 export function insp(data, comment = '') {
     console.log('⚑', comment,  util.inspect(data, 
@@ -24,10 +24,10 @@ export function insp(data, comment = '') {
  * 
  * @param {*} ImportMetaUrlData 
  * @param {string} fileName 
- * @param {boolean} ignoreInnerError is interpreter error expected
+ * @param {boolean} ignoreInnerError=false is interpreter error expected
  * @returns {PascalJs} 
  */
-export function runFile(ImportMetaUrlData, fileName, ignoreInnerError = false, config) {
+export function runFile(ImportMetaUrlData, fileName, ignoreInnerError = false, config = null) {
 
     if (!config) {
         config = defaultConfig;

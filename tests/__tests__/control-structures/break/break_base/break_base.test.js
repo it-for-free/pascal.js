@@ -1,6 +1,7 @@
 
 import { runFile, insp } from '../../../../testsHelper';
 import { ErrorsCodes } from '../../../../../src/Errors/ErrorsCodes';
+import { expect, test } from '@jest/globals';
 
 let pjs = runFile(import.meta.url, 'break_base.pas');
 

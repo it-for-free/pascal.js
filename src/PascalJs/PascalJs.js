@@ -6,6 +6,7 @@ import { SyntaxAnalyzer } from '../SyntaxAnalyzer/SyntaxAnalyzer';
 import { Engine } from '../Semantics/Engine';
 import { RuntimeError } from '../Errors/RuntimeError';
 import { config } from './demoConfig';
+import { TypesIds } from '../Semantics/Variables/TypesIds';
 export class PascalJs {
     /**
      * @type Engine  
@@ -50,6 +51,12 @@ export class PascalJs {
     }
 
     getVarValue(varName) {
-        return this.getVar(varName).value;
+        let variable = this.getVar(varName);
+        
+        if (variable.typeId === TypesIds.ARRAY) {
+            return this.getVar(varName).items;
+        } else {
+            return this.getVar(varName).value;
+        }
     }
 }
