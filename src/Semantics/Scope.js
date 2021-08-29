@@ -13,6 +13,9 @@ import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
 import { IndexedIdentifier } from '../SyntaxAnalyzer/Tree/Arrays/IndexedIdentifier';
 import { IndexedFunctionCall } from '../SyntaxAnalyzer/Tree/Arrays/IndexedFunctionCall';
 import { IndexRing } from '../SyntaxAnalyzer/Tree/Arrays/IndexRing';
+import { Constant } from '../SyntaxAnalyzer/Tree/Constant';
+import { UnaryMinus } from '../SyntaxAnalyzer/Tree/UnaryMinus';
+
 
 
 export class Scope
@@ -56,15 +59,25 @@ export class Scope
 
     getIntegerValueOfIndexConstant(constant)
     {
-        let typeId = constant.typeId;
-        switch (typeId) {
-            case TypesIds.INTEGER:
-                return constant.symbol.value;
-            case TypesIds.CHAR:
-                return constant.symbol.stringValue.charCodeAt(0);
-            case TypesIds.ENUM:
-                let enumElement = this.getEnumElement(constant);
-                return enumElement.getIndex();
+        if (constant instanceof Constant) {
+            let typeId = constant.typeId;
+            switch (typeId) {
+                case TypesIds.INTEGER:
+                    return constant.symbol.value;
+                case TypesIds.CHAR:
+                    return constant.symbol.stringValue.charCodeAt(0);
+                case TypesIds.ENUM:
+                    let enumElement = this.getEnumElement(constant);
+                    return enumElement.getIndex();
+            }
+        } else if (constant instanceof UnaryMinus) {
+            let valueExpression = constant.value;
+            if (valueExpression instanceof Constant &&
+                valueExpression.typeId === TypesIds.INTEGER) {
+                return -valueExpression.symbol.value;
+            } else {
+                this.addError(ErrorsCodes.typesMismatch, `Integer constant expected after unary minus.`, valueExpression);
+            }
         }
     }
 
@@ -97,6 +110,7 @@ export class Scope
         let offset = -minIntegerIndex;
 
         variable.offset = offset;
+        variable.arrayLength = maxIntegerIndex - minIntegerIndex + 1;
         variable.leftIntegerIndex = 0;
         variable.rightIntegerIndex = maxIntegerIndex;
         variable.rightIntegerIndex = maxIntegerIndex;

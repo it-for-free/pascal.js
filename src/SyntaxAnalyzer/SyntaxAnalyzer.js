@@ -212,6 +212,27 @@ export class SyntaxAnalyzer
         return new VariablesDeclaration(colon, identifiers, type);
     }
 
+    scanListArrayType(typeSymbol)
+    {
+        let elemsType = null;
+
+        let leftIndex = this.scanConstant();
+        this.accept(SymbolsCodes.twoPoints);
+        let rightIndex = this.scanConstant();
+
+        if (this.symbol.symbolCode === SymbolsCodes.comma) {
+            typeSymbol = this.symbol;
+            this.nextSym();
+            elemsType = this.scanListArrayType();
+        } else {
+            this.accept(SymbolsCodes.rBracket);
+            this.accept(SymbolsCodes.ofSy);
+            elemsType = this.scanType();
+        }
+
+        return new ArrayType(typeSymbol, leftIndex, rightIndex, elemsType);
+    }
+
     scanType()
     {
         let typeSymbol = null;
@@ -252,14 +273,7 @@ export class SyntaxAnalyzer
             typeSymbol = this.symbol;
             this.nextSym();
             this.accept(SymbolsCodes.lBracket);
-            let leftIndex = this.scanConstant();
-            this.accept(SymbolsCodes.twoPoints);
-            let rightIndex = this.scanConstant();
-            this.accept(SymbolsCodes.rBracket);
-            this.accept(SymbolsCodes.ofSy);
-            let elemsType = this.scanType();
-
-            return new ArrayType(typeSymbol, leftIndex, rightIndex, elemsType);
+            return this.scanListArrayType(typeSymbol);
         } else if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
             let enumType = new EnumType(this.symbol);
             let ident = null;

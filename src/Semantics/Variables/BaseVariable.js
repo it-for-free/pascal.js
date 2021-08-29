@@ -4,10 +4,6 @@ export class BaseVariable
     {
         this.type = null;
         this.typeId = null;
-//        let self = this;
-//        this.getType = function () {
-//            return self.type ? self.type : self.typeId;
-//        }
     }
 
     getType()

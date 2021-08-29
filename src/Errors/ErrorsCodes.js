@@ -10,4 +10,5 @@ export const ErrorsCodes = {
     typeNotDeclared: 110,
     indexIsOutOfRange: 111,
     identifierExpected: 112,
+    elementIsNotInitialized: 113,
 }

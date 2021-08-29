@@ -16,6 +16,8 @@ export class ErrorsDescription
             [ErrorsCodes.constantOrVariableNotDeclared, 'Constant or variable not declared'],
             [ErrorsCodes.typesMismatch, 'Types mismatch'],
             [ErrorsCodes.identifierExpected, 'Identifier expected'],
+            [ErrorsCodes.indexIsOutOfRange, 'Index is out of range'],
+            [ErrorsCodes.elementIsNotInitialized, 'Element is not initialized'],
         ]);
     }
 

@@ -17,6 +17,7 @@ export class ArrayVariable extends BaseVariable
         this.leftIntegerIndex = 0;
         this.rightIntegerIndex = null;
         this.offset = null;
+        this.arrayLength = null;
     }
 
     setValue(indexRing, type, value)
@@ -40,8 +41,10 @@ export class ArrayVariable extends BaseVariable
     {
         let indexExpression = indexRing.indexExpression;
         let index = this.scope.getIntegerValueOfIndexVariable(indexExpression) + this.offset;
-        if (typeof this.items[index] === 'undefined') {
+        if (index < 0 || index >= this.arrayLength) {
             this.scope.addError(ErrorsCodes.indexIsOutOfRange, '', indexRing);
+        } else if (typeof this.items[index] === 'undefined') {
+            this.scope.addError(ErrorsCodes.elementIsNotInitialized, '', indexRing);
         } else {
             let foundItem = this.items[index];
             return  indexRing.indexRing instanceof IndexRing ?
