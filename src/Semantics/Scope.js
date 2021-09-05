@@ -82,7 +82,7 @@ export class Scope
                 case TypesIds.INTEGER:
                     return constant.symbol.value;
                 case TypesIds.CHAR:
-                    return constant.symbol.stringValue.charCodeAt(0);
+                    return constant.symbol.value.charCodeAt(0);
                 case TypesIds.ENUM:
                     let enumElement = this.getEnumElement(constant);
                     return enumElement.getIndex();
