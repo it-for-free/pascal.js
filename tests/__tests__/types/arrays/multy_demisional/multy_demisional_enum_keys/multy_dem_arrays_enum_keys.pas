@@ -6,8 +6,8 @@ var
    a1 : integer;
 begin  
    b['o'][4]['f'] := 5;
-   a[2]['b'][Voronezh] := 4;
-   a[3]['c'][Moscow] := b['o'][4]['f'] + a[3]['b'] + 1;
+   a[3]['b'][Voronezh] := 4;
+   a[3]['c'][Moscow] := b['o'][4]['f'] + a[3]['b'][Voronezh] + 1;
 
    a1 := a[3]['c'][Moscow];
 end.

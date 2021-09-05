@@ -64,7 +64,7 @@ export class Engine
         this.errorsDescription = new ErrorsDescription();
     }
     /**
-     * @type Scope
+     * @return Scope
      */
     getCurrentScope()
     {
@@ -323,7 +323,6 @@ export class Engine
                 }
             }
             currentScope.cycleDepth++;
-            this.evaluateSentence(sentence.init);
             let previousVal = typeId === TypesIds.ENUM ?
                 new EnumVariable(currentValue.value, type) :
                 new ScalarVariable(currentValue.value, typeId);
