@@ -10,11 +10,11 @@ begin
       i := i + 1;
 
    j := 0;
-   for j := Mexico downto Voronezh do   
+   for a := Mexico downto Voronezh do   
       j := j + 1;
 
    k := 0;
-   for j := Mexico to Voronezh  do   
+   for a := Mexico to Voronezh  do   
       k := k + 1;
 
 end.

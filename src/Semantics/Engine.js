@@ -260,7 +260,7 @@ export class Engine
             let comparation = null;
             let typeId = currentValue.typeId;
             let type = currentValue.type === false ? typeId : currentValue.type;
-            currentScope.setValue(variableIdentifier, type, currentValue.value);
+            currentScope.setValue(variableIdentifier, type, currentValue.value, variableIdentifier);
             if (sentence.countDown) {
                 switch (typeId) {
                     case TypesIds.INTEGER:
