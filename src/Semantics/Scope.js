@@ -176,7 +176,7 @@ export class Scope
 
                     this.items[lowerCaseName].value = value;
                 } else {
-                    this.addError(ErrorsCodes.typesMismatch, null, treeNode);
+                    this.addTypeMismatchError(type, item, treeNode);
                 }
             } else if (item instanceof ArrayVariable) {
                 let indexRing = destination.indexRing;
@@ -188,12 +188,19 @@ export class Scope
 
                     item.setValue(indexRing, type, value);
                 } else {
-                    this.addError(ErrorsCodes.typesMismatch, null, treeNode);
+                    this.addTypeMismatchError(type, item, treeNode);
                 }
             } else {
                 this.addError(ErrorsCodes.typesMismatch, null, treeNode);
             }
         }
+    }
+
+    addTypeMismatchError(type, item, treeNode)
+    {
+        let sourceType = Number.isInteger(type) ? new ScalarType(null, type) : type;
+        let destinationType = item.type === false ? new ScalarType(null, item.typeId) : item.type;
+        this.addError(ErrorsCodes.typesMismatch, `Type ${destinationType} expected but ${sourceType} found.`, treeNode);
     }
 
     getDestinationType(arrayType, indexRing)
