@@ -14,7 +14,7 @@ export class PascalJs {
     engine;
 
     /**
-     * Possible run/parce error
+     * @type RuntimeError
      */
     error;
 
@@ -62,15 +62,7 @@ export class PascalJs {
         }
     }
 
-    // getArrayValueForIndex(arrName, indices) {
-    //     let variable = this.getVar(arrName);
-        
-    //     if (variable.typeId === TypesIds.ARRAY) {
-    //         return this.getVar(varName).items;
-    //     } else {
-    //         return this.getVar(varName).value;
-    //     }
-    // }
-
-    // getIndexRingByPathByIndices
+    getError() {
+       return this.error;   
+    }
 }
