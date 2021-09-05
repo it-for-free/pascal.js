@@ -10,4 +10,9 @@ export class AppliedNamedType extends TypeBase
     {
         super(symbol, TypesIds.APPLIED_NAMED);
     }
+
+    toString()
+    {
+        return this.symbol.stringValue;
+    }
 }

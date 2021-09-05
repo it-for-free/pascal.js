@@ -10,4 +10,9 @@ export class ArrayType extends TypeBase
         this.leftIndex = leftIndex;
         this.rightIndex = rightIndex;
     }
+
+    toString()
+    {
+        return `array [${this.leftIndex.symbol.value}..${this.rightIndex.symbol.value}] of ${this.typeOfElements}`;
+    }
 }
