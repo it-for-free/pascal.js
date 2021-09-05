@@ -1,7 +1,7 @@
 
-import { runFile, insp } from '../../../../testsHelper';
 import { config as defaultConfig} from '../../../../../src/PascalJs/demoConfig';
 import { expect, test } from '@jest/globals';
+import { runFile } from '../../../../helpers/testsHelper';
 class MyOutputStream {
   constructor() {
     this.value = '';

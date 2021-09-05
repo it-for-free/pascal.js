@@ -1,5 +1,5 @@
 import { expect, test } from '@jest/globals';
-import { runFile, insp } from '../../../../../testsHelper';
+import { runFile } from 'tests/helpers/testsHelper';
 
 let pjs = runFile(import.meta.url, 'multy_dem_arrays_base.pas');
 // insp(pjs.getVarValue('a'), ' a ');

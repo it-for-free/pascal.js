@@ -1,6 +1,6 @@
 import { expect, test } from '@jest/globals';
+import { runFile } from 'tests/helpers/testsHelper';
 import { ErrorsCodes } from '../../../../../src/Errors/ErrorsCodes';
-import { runFile } from '../../../../testsHelper';
 
 
 let pjs = runFile(import.meta.url, 'array_instead_of_number.pas', true);

@@ -1,6 +1,6 @@
 import { expect, test } from '@jest/globals';
-import { ErrorsCodes } from '../../../../../src/Errors/ErrorsCodes';
-import { runFile, insp } from '../../../../testsHelper';
+import { ErrorsCodes } from 'src/Errors/ErrorsCodes';
+import { runFile } from 'tests/helpers/testsHelper';
 
 let pjs = runFile(import.meta.url, 'scalar_value_instead_of_array.pas', true);
 

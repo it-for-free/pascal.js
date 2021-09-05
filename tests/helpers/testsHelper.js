@@ -2,8 +2,8 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import util from 'util';
 import { FileIO, ConsoleOutput, LexicalAnalyzer, 
-    SyntaxAnalyzer, Engine,  PascalJs   } from '../src/pascal.js';
-import { config as defaultConfig } from '../src/PascalJs/demoConfig';    
+    SyntaxAnalyzer, Engine,  PascalJs   } from '../../src/pascal.js';
+import { config as defaultConfig } from '../../src/PascalJs/demoConfig';    
 
 export function getFullPath(ImportMetaUrlData, fileName) {
     const __filename = fileURLToPath(ImportMetaUrlData);
