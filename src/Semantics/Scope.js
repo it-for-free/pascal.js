@@ -162,7 +162,6 @@ export class Scope
         }
         let name = identifier.symbol.stringValue;
         let lowerCaseName = name.toLowerCase();
-
         if (!this.items.hasOwnProperty(lowerCaseName)) {
             this.addError(ErrorsCodes.variableNotDeclared, `Variable '${lowerCaseName}' not declared.`, treeNode);
         } else {
@@ -176,6 +175,8 @@ export class Scope
                     this.sameType(item.type, type)) {
 
                     this.items[lowerCaseName].value = value;
+                } else {
+                    this.addError(ErrorsCodes.typesMismatch, null, treeNode);
                 }
             } else if (item instanceof ArrayVariable) {
                 let indexRing = destination.indexRing;
@@ -186,6 +187,8 @@ export class Scope
                     this.sameType(destinationType, type)) {
 
                     item.setValue(indexRing, type, value);
+                } else {
+                    this.addError(ErrorsCodes.typesMismatch, null, treeNode);
                 }
             } else {
                 this.addError(ErrorsCodes.typesMismatch, null, treeNode);
@@ -195,7 +198,8 @@ export class Scope
 
     getDestinationType(arrayType, indexRing)
     {
-        return  arrayType instanceof ArrayType ?
+        return  arrayType instanceof ArrayType &&
+                indexRing !== null ?
                 this.getDestinationType(arrayType.typeOfElements, indexRing.indexRing) :
                 arrayType;
     }
