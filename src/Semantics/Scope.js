@@ -49,11 +49,28 @@ export class Scope
         let resolvedType = this.resolveNamedType(type);
 
         if (resolvedType instanceof ScalarType) {
+            if (value === null) {
+                switch (resolvedType.typeId) {
+                    case TypesIds.INTEGER:
+                    case TypesIds.REAL:
+                        value = 0;
+                        break;
+                    case TypesIds.CHAR:
+                        value = String.fromCharCode(0);
+                        break;
+                    case TypesIds.STRING:
+                        value = '';
+                        break;
+                }
+            }
             return new ScalarVariable(value, resolvedType.typeId);
         } else if (resolvedType instanceof EnumType) {
+            if (value === null) {
+                value = resolvedType.items[0];
+            }
             return new EnumVariable(value, resolvedType);
         } else if (resolvedType instanceof ArrayType) {
-            return this.createArrayVariable(type);
+            return this.createArrayVariable(value, type);
         }
     }
 
@@ -95,11 +112,12 @@ export class Scope
         }
     }
 
-    createArrayVariable(type)
+    createArrayVariable(parentArray, type)
     {
         let resolvedType = this.resolveNamedType(type);
         let variable = new ArrayVariable(resolvedType, this);
 
+        variable.parentArray = parentArray;
         let leftIndex = resolvedType.leftIndex;
         let rightIndex = resolvedType.rightIndex;
         let leftIntegerIndex = this.getIntegerValueOfIndexConstant(leftIndex);

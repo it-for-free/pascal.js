@@ -18,6 +18,7 @@ export class ArrayVariable extends BaseVariable
         this.rightIntegerIndex = null;
         this.offset = null;
         this.arrayLength = null;
+        this.parentArray = null;
     }
 
     setValue(indexRing, type, value)
@@ -25,7 +26,9 @@ export class ArrayVariable extends BaseVariable
         let indexExpression = indexRing.indexExpression;
         let index = this.scope.getIntegerValueOfIndexVariable(indexExpression) + this.offset;
 
-        if (typeof this.items[index] === 'undefined') {
+        if (index < 0 || index >= this.arrayLength) {
+            this.scope.addError(ErrorsCodes.indexIsOutOfRange, '', indexRing);
+        } else if (typeof this.items[index] === 'undefined') {
             this.items[index] = this.scope.createVariable(this.type.typeOfElements, value);
         }
         let item = this.items[index];
