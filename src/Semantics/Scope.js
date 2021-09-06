@@ -169,11 +169,7 @@ export class Scope
 
             if (item instanceof ScalarVariable ||
                 item instanceof EnumVariable) {
-                if (Number.isInteger(type) &&
-                    type === item.typeId ||
-                    !Number.isInteger(type) &&
-                    this.sameType(item.type, type)) {
-
+                if (this.sameType(item.getType(), type)) {
                     this.items[lowerCaseName].value = value;
                 } else {
                     this.addTypeMismatchError(type, item, treeNode);
@@ -181,11 +177,7 @@ export class Scope
             } else if (item instanceof ArrayVariable) {
                 let indexRing = destination.indexRing;
                 let destinationType = this.getDestinationType(item.type, indexRing);
-                if (Number.isInteger(type) &&
-                    type === destinationType.typeId ||
-                    !Number.isInteger(type) &&
-                    this.sameType(destinationType, type)) {
-
+                if (this.sameType(type, destinationType)) {
                     item.setValue(indexRing, type, value);
                 } else {
                     this.addTypeMismatchError(type, item, treeNode);
@@ -258,7 +250,16 @@ export class Scope
 
     sameType(typeA, typeB)
     {
-        if (typeA.constructor === typeB.constructor) {
+        if (Number.isInteger(typeA) &&
+            Number.isInteger(typeB)) {
+            return typeA === typeB;
+        } else if (Number.isInteger(typeA) &&
+            !Number.isInteger(typeB)) {
+            return typeA === typeB.typeId;
+        } else if (Number.isInteger(typeB) &&
+            !Number.isInteger(typeA)) {
+            return typeA.typeId === typeB;
+        } else if (typeA.constructor === typeB.constructor) {
             if (typeA instanceof ScalarType) {
                 return typeA.typeId === typeB.typeId;
             } else if (typeA instanceof EnumType) {
