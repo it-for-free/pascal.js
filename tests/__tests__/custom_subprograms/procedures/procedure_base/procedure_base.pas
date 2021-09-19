@@ -1,5 +1,5 @@
 
-procedure  echo(s: string);
+procedure echo(s: string);
 begin
    writeln(s);
 end;

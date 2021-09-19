@@ -17,6 +17,6 @@ export const getOneVarOutputStreamConfig = () =>  {
   return {
     ...defaultConfig,
     outputStream: new OneVarOutputStream(),
-    TESTING_NEW_LINE_SYMBOL,
+    ouputNewLineSymbol: TESTING_NEW_LINE_SYMBOL,
   }
 };
