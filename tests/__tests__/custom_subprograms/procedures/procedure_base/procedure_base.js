@@ -1,4 +1,3 @@
-// TODO: type checking!
 import { expect, test } from '@jest/globals';
 import { getOneVarOutputStreamConfig, TESTING_NEW_LINE_SYMBOL } from '../../../../helpers/output_stream/OneVarOutputStream ';
 
