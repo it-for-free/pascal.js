@@ -59,9 +59,10 @@ npm test
  
 ## TODO
 
-Срочно:
+Оперативно:
 * Поддержка result для возврата значения из функции
 * Проверка типов (+ **раскомментировать** реальный тест `tests/__tests__/custom_subprograms/procedures/procedure_base/procedure_base.js`)
+* read() & readln()
 
 Несрочно:
 * "Index is out of range" -- добавить подробности - какой именно индекс и в каком диапазоне
