@@ -16,7 +16,7 @@
             "args": [
                 "--es-module-specifier-resolution=node",
                 "${workspaceFolder}/run.js",
-            ]
+            ],
         },
         {
             "type": "node",
@@ -25,6 +25,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
+            "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
             "args": [
                 "--experimental-vm-modules",
                 "node_modules/.bin/jest",
