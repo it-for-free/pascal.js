@@ -6,6 +6,7 @@ import { SyntaxAnalyzer } from '../SyntaxAnalyzer/SyntaxAnalyzer';
 import { Engine } from '../Semantics/Engine';
 import { RuntimeError } from '../Errors/RuntimeError';
 import { config } from './demoConfig';
+import { TypesIds } from '../Semantics/Variables/TypesIds';
 export class PascalJs {
     /**
      * @type Engine  
@@ -13,7 +14,7 @@ export class PascalJs {
     engine;
 
     /**
-     * Possible run/parce error
+     * @type RuntimeError
      */
     error;
 
@@ -50,6 +51,18 @@ export class PascalJs {
     }
 
     getVarValue(varName) {
-        return this.getVar(varName).value;
+        let variable = this.getVar(varName);
+        
+        if (variable.typeId === TypesIds.ARRAY) {
+            return this.getVar(varName).items;
+        } else  if (variable.typeId === TypesIds.ENUM) {
+            return this.getVar(varName).value.symbol.stringValue;
+        } else {
+            return this.getVar(varName).value;
+        }
+    }
+
+    getError() {
+       return this.error;   
     }
 }

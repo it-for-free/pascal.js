@@ -3,6 +3,9 @@ import { SymbolsCodes } from '../LexicalAnalyzer/SymbolsCodes';
 import { SymbolsDescription } from '../LexicalAnalyzer/SymbolsDescription';
 import { Assignation } from './Tree/Assignation';
 import { TakeElemByKeys } from './Tree/TakeElemByKeys';
+import { IndexedIdentifier } from './Tree/Arrays/IndexedIdentifier';
+import { IndexedFunctionCall } from './Tree/Arrays/IndexedFunctionCall';
+import { IndexRing } from './Tree/Arrays/IndexRing';
 import { GetByPointer } from './Tree/GetByPointer';
 import { TakeField } from './Tree/TakeField';
 import { Multiplication } from './Tree/Multiplication';
@@ -25,6 +28,7 @@ import { Modulo } from './Tree/Modulo';
 import { LogicalAnd } from './Tree/LogicalAnd';
 import { LogicalOr } from './Tree/LogicalOr';
 import { UnaryMinus } from './Tree/UnaryMinus';
+import { Not } from './Tree/Not';
 import { Program } from './Tree/Program';
 import { Procedure } from './Tree/Procedure';
 import { Function } from './Tree/Function';
@@ -40,6 +44,7 @@ import { ProcedureType } from './Tree/Types/ProcedureType';
 import { TypeApplied } from './Tree/ParametersList/TypeApplied';
 import { TypesIds } from '../Semantics/Variables/TypesIds';
 import { EnumType } from './Tree/Types/EnumType';
+import { ArrayType } from './Tree/Types/ArrayType';
 import { WhileCycle } from './Tree/Loops/WhileCycle';
 import { RepeatCycle } from './Tree/Loops/RepeatCycle';
 import { ForCycle } from './Tree/Loops/ForCycle';
@@ -207,6 +212,27 @@ export class SyntaxAnalyzer
         return new VariablesDeclaration(colon, identifiers, type);
     }
 
+    scanListArrayType(typeSymbol)
+    {
+        let elemsType = null;
+
+        let leftIndex = this.scanConstant();
+        this.accept(SymbolsCodes.twoPoints);
+        let rightIndex = this.scanConstant();
+
+        if (this.symbol.symbolCode === SymbolsCodes.comma) {
+            typeSymbol = this.symbol;
+            this.nextSym();
+            elemsType = this.scanListArrayType();
+        } else {
+            this.accept(SymbolsCodes.rBracket);
+            this.accept(SymbolsCodes.ofSy);
+            elemsType = this.scanType();
+        }
+
+        return new ArrayType(typeSymbol, leftIndex, rightIndex, elemsType);
+    }
+
     scanType()
     {
         let typeSymbol = null;
@@ -247,8 +273,7 @@ export class SyntaxAnalyzer
             typeSymbol = this.symbol;
             this.nextSym();
             this.accept(SymbolsCodes.lBracket);
-
-            this.accept(SymbolsCodes.rBracket);
+            return this.scanListArrayType(typeSymbol);
         } else if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
             let enumType = new EnumType(this.symbol);
             let ident = null;
@@ -485,10 +510,9 @@ export class SyntaxAnalyzer
             let variable = new Identifier(identSymbol);
             let assignSymbol = this.symbol;
             this.accept(SymbolsCodes.assign);
+            let initExpression = this.scanSimpleExpression();
 
-            let init = new Assignation(assignSymbol, variable, this.scanSimpleExpression());
             let countDown = false;
-            let countSymbol = this.symbol;
             switch (this.symbol.symbolCode) {
                 case SymbolsCodes.downtoSy:
                     countDown = true;
@@ -502,45 +526,11 @@ export class SyntaxAnalyzer
             }
 
             this.nextSym();
-
-            let condition = countDown ?
-                new GreaterOrEqual(this.symbol, variable, this.scanSimpleExpression()) :
-                new LessOrEqual(this.symbol, variable, this.scanSimpleExpression());
-
+            let lastExpression = this.scanSimpleExpression();
             this.accept(SymbolsCodes.doSy);
             let body = this.scanSentence();
 
-            let variablesType = this.getVarTypeByIdentifier(identSymbol.value);
-            let operation = null;
-
-            let symbolCode = variablesType.symbol.symbolCode;
-            let unityConstant = new Constant(new NmbInt(countSymbol.textPosition, SymbolsCodes.intC, '1'));
-            switch (symbolCode) {
-                case SymbolsCodes.integerSy:
-                    operation = new Assignation(
-                        assignSymbol,
-                        variable,
-                        countDown ?
-                        new Subtraction(countSymbol, variable, unityConstant) :
-                        new Addition(countSymbol, variable, unityConstant)
-                    );
-                    break;
-                case SymbolsCodes.charSy:
-                    let chrName = new Identifier( new Symbol(countSymbol.textPosition, SymbolsCodes.ident, 'chr'));
-                    let ordName = new Identifier( new Symbol(countSymbol.textPosition, SymbolsCodes.ident, 'ord'));
-                    operation = new Assignation(
-                        assignSymbol,
-                        variable,
-                        new FunctionCall(null, chrName, [
-                            countDown ?
-                            new Subtraction(countSymbol, new FunctionCall(null, ordName, [variable]), unityConstant) :
-                            new Addition(countSymbol, new FunctionCall(null, ordName, [variable]), unityConstant)
-                        ])
-                    );
-                    break;
-            }
-
-            return new ForCycle(forSymbol, init, condition, operation, body);
+            return new ForCycle(forSymbol, variable, initExpression, lastExpression, countDown, body);
         } else if (this.symbol.symbolCode === SymbolsCodes.breakSy) {
             let breakSymbol = this.symbol;
             this.nextSym();
@@ -569,19 +559,45 @@ export class SyntaxAnalyzer
         return compoundOperator;
     }
 
+    scanIndicesBrackets(indexSymbol)
+    {
+        this.accept(SymbolsCodes.lBracket);
+        let rootIndexRing = new IndexRing(indexSymbol, this.scanExpression());
+
+        while (this.symbol.symbolCode === SymbolsCodes.comma) {
+            let commaSymbol = this.symbol;
+            this.nextSym();
+            let currentIndexRing =  new IndexRing(commaSymbol, this.scanExpression());
+            rootIndexRing.appendIndexRing(currentIndexRing);
+        }
+
+        this.accept(SymbolsCodes.rBracket);
+
+        return rootIndexRing;
+    }
+
+    scanIndices(indexSymbol)
+    {
+        let lBracket = this.symbol;
+        let rootIndexRing = this.scanIndicesBrackets(this.symbol);
+
+        while (this.symbol.symbolCode === SymbolsCodes.lBracket) {
+            let lBracketSymbol = this.symbol;
+            let currentIndexRing = this.scanIndicesBrackets(lBracketSymbol);
+            rootIndexRing.appendIndexRing(currentIndexRing);
+        }
+
+        return rootIndexRing;
+    }
+
     /** Синтаксическая диаграмма "переменная" */
     scanVariable(ident)
     {
         switch(this.symbol.symbolCode) {
             case SymbolsCodes.lBracket:
                 let lBracket = this.symbol;
-                let keys = [];
-                do {
-                    this.nextSym();
-                    keys.push(this.scanExpression());
-                } while (this.symbol.symbolCode === SymbolsCodes.comma)
-                this.accept(SymbolsCodes.rBracket);
-                return new TakeElemByKeys(lBracket, ident, keys);
+                let identifier = new Identifier(ident);
+                return new IndexedIdentifier(lBracket, identifier, this.scanIndices());
 
             case SymbolsCodes.point:
                 let point = null;
@@ -644,24 +660,35 @@ export class SyntaxAnalyzer
     scanSimpleExpression()
     {
         let unaryMinus = false;
+        let not = false;
         let term = null;
+        let unaryOperationSymbol = null;
 
         switch (this.symbol.symbolCode) {
             case SymbolsCodes.minus:
                 unaryMinus = true;
             case SymbolsCodes.plus:
+                unaryOperationSymbol = this.symbol;
+                this.nextSym();
+                break;
+            case SymbolsCodes.notSy:
+                not = true;
+                unaryOperationSymbol = this.symbol;
                 this.nextSym();
         }
 
         term = this.scanTerm();
         if (unaryMinus) {
-            term = new UnaryMinus(this.symbol, term);
+            term = new UnaryMinus(unaryOperationSymbol, term);
+        }
+        if (not) {
+            term = new Not(unaryOperationSymbol, term);
         }
 
         while ( this.symbol !== null && (
                     this.symbol.symbolCode === SymbolsCodes.plus ||
                     this.symbol.symbolCode === SymbolsCodes.minus ||
-                    this.symbol.symbolCode === SymbolsCodes.or
+                    this.symbol.symbolCode === SymbolsCodes.orSy
                 )) {
 
             switch (this.symbol.symbolCode) {
@@ -673,7 +700,7 @@ export class SyntaxAnalyzer
                     this.nextSym();
                     term = new Subtraction(this.symbol, term, this.scanTerm());
                     break;
-                case SymbolsCodes.orSym:
+                case SymbolsCodes.orSy:
                     this.nextSym();
                     term = new LogicalOr(this.symbol, term, this.scanTerm());
                     break;
@@ -735,12 +762,20 @@ export class SyntaxAnalyzer
                     this.nextSym();
                     let parameters = this.scanParameters();
 
-                    return new FunctionCall(leftParSymbol, variable, parameters);
+                    let functionCall = new FunctionCall(leftParSymbol, variable, parameters);
+
+                    if (this.symbol.symbolCode === SymbolsCodes.lBracket) {
+                        let lBracket = this.symbol;
+                        return new IndexedFunctionCall(lBracket, functionCall, this.scanIndices());
+                    } else {
+                        return functionCall;
+                    }
                 } else {
                     return variable;
                 }
+            } else if (variable instanceof IndexedIdentifier) {
+                return variable;
             }
-
         } else if ( this.symbol.symbolCode === SymbolsCodes.floatC ||
                     this.symbol.symbolCode === SymbolsCodes.intC ||
                     this.symbol.symbolCode === SymbolsCodes.stringC ||
@@ -818,6 +853,7 @@ export class SyntaxAnalyzer
             case SymbolsCodes.charC:
             case SymbolsCodes.stringC:
             case SymbolsCodes.booleanC:
+            case SymbolsCodes.ident:
                 constant = new Constant(this.symbol);
                 this.nextSym();
         }
@@ -832,19 +868,5 @@ export class SyntaxAnalyzer
     addError(errorCode, errorText = null, symbol)
     {
         this.lexicalAnalyzer.fileIO.addError(errorCode, errorText, symbol.textPosition);
-    }
-
-    getVarTypeByIdentifier(variableName)
-    {
-        let variablesType = null;
-        this.tree.vars.forEach( function (varDeclaration) {
-            varDeclaration.identifiers.forEach( function (identifier) {
-                if (identifier.symbol.value === variableName) {
-                    variablesType = varDeclaration.variablesType;
-                }
-            });
-        });
-
-        return variablesType;
     }
 };

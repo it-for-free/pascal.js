@@ -1,5 +1,6 @@
 
-import { runFile, insp } from '../../../testsHelper';
+import { expect, test } from '@jest/globals';
+import { runFile } from '../../../helpers/testsHelper';
 
 let pjs = runFile(import.meta.url, 'last_operation_works.pas');
 // insp(pjs.engine.tree);

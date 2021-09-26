@@ -1,5 +1,6 @@
 import { Scope } from './Scope';
 import { ScalarVariable } from './Variables/ScalarVariable';
+import { EnumVariable } from './Variables/EnumVariable';
 import { TypesIds } from './Variables/TypesIds';
 import { VariablesDeclaration } from '../SyntaxAnalyzer/Tree/VariablesDeclaration';
 import { TypeDeclaration } from '../SyntaxAnalyzer/Tree/TypeDeclaration';
@@ -23,6 +24,7 @@ import { Modulo } from '../SyntaxAnalyzer/Tree/Modulo';
 import { LogicalAnd } from '../SyntaxAnalyzer/Tree/LogicalAnd';
 import { LogicalOr } from '../SyntaxAnalyzer/Tree/LogicalOr';
 import { UnaryMinus } from '../SyntaxAnalyzer/Tree/UnaryMinus';
+import { Not } from '../SyntaxAnalyzer/Tree/Not';
 import { CompoundOperator } from '../SyntaxAnalyzer/Tree/CompoundOperator';
 import { Implication } from '../SyntaxAnalyzer/Tree/Implication';
 import { WhileCycle } from '../SyntaxAnalyzer/Tree/Loops/WhileCycle';
@@ -43,6 +45,9 @@ import { RuntimeError } from '../Errors/RuntimeError';
 import { ErrorsDescription } from '../Errors/ErrorsDescription';
 import { ErrorsCodes } from '../Errors/ErrorsCodes';
 import { Break } from  '../SyntaxAnalyzer/Tree/Break';
+import { IndexedIdentifier } from '../SyntaxAnalyzer/Tree/Arrays/IndexedIdentifier';
+import { IndexedFunctionCall } from '../SyntaxAnalyzer/Tree/Arrays/IndexedFunctionCall';
+import { IndexRing } from '../SyntaxAnalyzer/Tree/Arrays/IndexRing';
 
 export class Engine
 {
@@ -59,7 +64,7 @@ export class Engine
         this.errorsDescription = new ErrorsDescription();
     }
     /**
-     * @type Scope
+     * @return Scope
      */
     getCurrentScope()
     {
@@ -148,18 +153,31 @@ export class Engine
         }
     }
 
+    evaluateIndexRing(indexRing)
+    {
+        indexRing.indexExpression = this.evaluateExpression(indexRing.indexExpression);
+        if (indexRing.indexRing instanceof IndexRing) {
+            this.evaluateIndexRing(indexRing.indexRing);
+        }
+
+        return indexRing;
+    }
+
     evaluateSentence(sentence)
     {
         let currentScope = this.getCurrentScope();
 
         if (sentence instanceof Assignation) {
-            let identifier = sentence.destination.symbol.stringValue;
+            let destination = sentence.destination;
             let sourceExpression = sentence.sourceExpression;
             let expressionResult = this.evaluateExpression(sourceExpression);
             let type = expressionResult.getType();
             let value = expressionResult.value;
+            if (destination instanceof IndexedIdentifier) {
+                destination.indexRing = this.evaluateIndexRing(destination.indexRing);
+            }
 
-            currentScope.setValue(identifier, type, value, sentence.destination);
+            currentScope.setValue(destination, type, value, sentence.destination);
         } else if (sentence instanceof CompoundOperator) {
             if (sentence.sentences) {
                 let sentences = sentence.sentences;
@@ -192,7 +210,8 @@ export class Engine
                 this.addError(ErrorsCodes.nameNotDescribed, `Procedure '${procedureName}' is not declared!`, sentence.identifier);
             }
 
-            let scope = new Scope();
+            let currentScope = this.getCurrentScope();
+            let scope = new Scope(currentScope);
             this.addParametersToScope(sentence.parameters, procedure.signature, scope);
             this.treesCounter++;
             this.tree = procedure;
@@ -233,14 +252,90 @@ export class Engine
             currentScope.cycleDepth--;
         } else if (sentence instanceof ForCycle) {
             let currentScope = this.getCurrentScope();
+            let variableIdentifier = sentence.variableIdentifier;
+            let currentValue = this.evaluateExpression(sentence.initExpression);
+            let lastValue = this.evaluateExpression(sentence.lastExpression);
+
+            let increment = null;
+            let comparation = null;
+            let typeId = currentValue.typeId;
+            let type = currentValue.type === false ? typeId : currentValue.type;
+            currentScope.setValue(variableIdentifier, type, currentValue.value, variableIdentifier);
+            if (sentence.countDown) {
+                switch (typeId) {
+                    case TypesIds.INTEGER:
+                        increment = function(elem) {
+                            elem.value--;
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.value >= rightElem.value;
+                        break;
+                    case TypesIds.CHAR:
+                        increment = function(elem) {
+                            let code = elem.value.charCodeAt(0);
+                            code--;
+                            elem.value = String.fromCharCode(code);
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.value.charCodeAt(0) >= rightElem.value.charCodeAt(0);
+                        break;
+                    case TypesIds.ENUM:
+                        increment = function(elem) {
+                            let items = elem.type.items;
+                            let len = items.length;
+                            let index = elem.getIndex();
+                            index--;
+                            elem.value = items[(index + len) % len];
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.getIndex() >= rightElem.getIndex();
+                        break;
+                }
+            } else {
+                switch (typeId) {
+                    case TypesIds.INTEGER:
+                        increment = function(elem) {
+                            elem.value++;
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.value <= rightElem.value;
+                        break;
+                    case TypesIds.CHAR:
+                        increment = function(elem) {
+                            let code = elem.value.charCodeAt(0);
+                            code++;
+                            elem.value = String.fromCharCode(code);
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.value.charCodeAt(0) <= rightElem.value.charCodeAt(0);
+                        break;
+                    case TypesIds.ENUM:
+                        increment = function(elem) {
+                            let items = elem.type.items;
+                            let len = items.length;
+                            let index = elem.getIndex();
+                            index++;
+                            elem.value = items[index % len];
+                            return elem;
+                        };
+                        comparation = (leftElem, rightElem) => leftElem.getIndex() <= rightElem.getIndex();
+                        break;
+                }
+            }
             currentScope.cycleDepth++;
-            this.evaluateSentence(sentence.init);
-            while (this.evaluateExpression(sentence.condition).value === true) {
+            let previousVal = typeId === TypesIds.ENUM ?
+                new EnumVariable(currentValue.value, type) :
+                new ScalarVariable(currentValue.value, typeId);
+            let canContinue = true;
+            while (comparation(currentValue, lastValue) && canContinue) {
                 let result = this.evaluateSentence(sentence.body);
                 if (result instanceof Break) {
                     break;
                 }
-                this.evaluateSentence(sentence.operation);
+                previousVal.value = currentValue.value;
+                currentValue = increment(currentValue);
+                currentScope.setValue(variableIdentifier, type, currentValue.value);
+                canContinue = comparation(previousVal, currentValue);
             }
             currentScope.cycleDepth--;
         } else if (sentence instanceof Break) {
@@ -259,15 +354,25 @@ export class Engine
         if (signature.length === 0) {
             scope.setParametersList(parametersValues);
         } else {
+            let self = this;
             let parametersCounter = 0;
             signature.forEach(function(appliedType) {
                 let identifiers = appliedType.identifiers;
+                let byReference = appliedType.byReference;
                 identifiers.forEach(function(identifier) {
                     let variableName = identifier.symbol.value;
-                    let typeId = appliedType.typeId;
-                    let value = parametersValues[parametersCounter].value;
-                    scope.addVariable(variableName, typeId);
-                    scope.setValue(variableName, typeId, value);
+                    let type = appliedType.type;
+                    let parameter = parameters[parametersCounter];
+                    if (byReference) {
+                        if (!(parameter instanceof Identifier)) {
+                            self.addError(ErrorsCodes.identifierExpected, 'Cannot use other expressions here', parameter);
+                        }
+                        scope.addVariableByReference(parameter, identifier);
+                    } else {
+                        let result = self.evaluateExpression(parameter);
+                        scope.addVariable(variableName, type);
+                        scope.setValue(identifier, type, result.value, identifier);
+                    }
                     parametersCounter++;
                 });
             });
@@ -284,7 +389,7 @@ export class Engine
             if (leftOperand.typeId === TypesIds.ENUM &&
                 rightOperand.typeId === TypesIds.ENUM &&
                 Object.is(leftOperand.type, rightOperand.type)) {
-                result = leftOperand.getIndex() !== rightOperand.getIndex();
+                result = leftOperand.getIndex() === rightOperand.getIndex();
             } else {
                 result = leftOperand.value === rightOperand.value;
             }
@@ -415,7 +520,10 @@ export class Engine
 
     evaluateTerm(expression)
     {
-        if (expression instanceof UnaryMinus) {
+        if (expression instanceof Not) {
+            let term = this.evaluateTerm(expression.value);
+            return new ScalarVariable(!term.value, term.typeId);
+        } else if (expression instanceof UnaryMinus) {
             let term = this.evaluateTerm(expression.value);
             return new ScalarVariable(-term.value, term.typeId);
         } else if (expression instanceof Multiplication) {
@@ -466,6 +574,10 @@ export class Engine
         } else if (expression instanceof Identifier) {
             let currentScope = this.getCurrentScope();
             return currentScope.getElementByIdentifier(expression);
+        } else if (expression instanceof IndexedIdentifier) {
+            let currentScope = this.getCurrentScope();
+            expression.indexRing = this.evaluateIndexRing(expression.indexRing);
+            return currentScope.getElementByIndexedIdentifier(expression);
         } else if (expression instanceof FunctionCall) {
 
             let functionName = expression.identifier.symbol.value;
@@ -478,7 +590,8 @@ export class Engine
                 this.addError(ErrorsCodes.nameNotDescribed, `Function '${functionName}' is not declared!`, expression.identifier);
             }
 
-            let scope = new Scope();
+            let currentScope = this.getCurrentScope();
+            let scope = new Scope(currentScope);
 
             scope.addVariable(functionName, calledFunction.returnType);
             this.addParametersToScope(expression.parameters, calledFunction.signature, scope);

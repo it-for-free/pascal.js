@@ -2,12 +2,14 @@ import { TreeNodeBase } from '../TreeNodeBase';
 
 export class ForCycle extends TreeNodeBase
 {
-    constructor(symbol, init, condition, operation, body)
+    constructor(symbol, variableIdentifier, initExpression, lastExpression, countDown, body)
     {
         super(symbol);
-        this.init = init;
-        this.condition = condition;
-        this.operation = operation;
+
+        this.variableIdentifier = variableIdentifier;
+        this.initExpression = initExpression;
+        this.lastExpression = lastExpression;
+        this.countDown = countDown;
         this.body = body;
     }
 }

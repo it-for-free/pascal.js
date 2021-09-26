@@ -26,6 +26,9 @@ export class Constant extends TreeNodeBase
             case SymbolsCodes.booleanC:
                 typeId = TypesIds.BOOLEAN;
                 break;
+            case SymbolsCodes.ident:
+                typeId = TypesIds.ENUM;
+                break;
         }
 
         this.typeId = typeId;
