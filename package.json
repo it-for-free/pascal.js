@@ -4,10 +4,12 @@
     "main": "./src/pascal.js",
     "type": "module",
     "devDependencies": {
-        "jest": "^26.6.3"
+        "jest": "^26.6.3",
+        "readline-sync": "^1.4.10"
     },
     "scripts": {
         "test": "node --experimental-vm-modules node_modules/.bin/jest tests/__tests__",
-        "testme": "node --experimental-vm-modules node_modules/.bin/jest tests/__tests__/procedures/write_writeln/write_writeln_base.js"
+        "testme": "node --experimental-vm-modules node_modules/.bin/jest tests/__tests__/procedures/write_writeln/write_writeln_base.js",
+        "start": "node --es-module-specifier-resolution=node run.js"
     }
 }

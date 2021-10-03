@@ -59,7 +59,7 @@ export class Engine
         this.scopes = [];
         this.currentScopeId = 0;
         this.scopes[this.currentScopeId] = new Scope();
-        this.proceduresStore = new ProceduresStore(config.outputStream, config.ouputNewLineSymbol);
+        this.proceduresStore = new ProceduresStore(config.outputStream, config.ouputNewLineSymbol, config.inputNewLineSymbol, config.inputStream);
         this.functionsStore = new FunctionsStore();
         this.errorsDescription = new ErrorsDescription();
     }
@@ -200,7 +200,6 @@ export class Engine
         } else if (sentence instanceof ProcedureCall) {
 
             let procedureName = sentence.identifier.symbol.value;
-
             let isDeclaredProcedure = this.tree.procedures.hasOwnProperty(procedureName);
             let procedure = isDeclaredProcedure ?
                 this.tree.procedures[procedureName]:
@@ -350,7 +349,9 @@ export class Engine
 
     addParametersToScope(parameters, signature, scope)
     {
+        console.log('parameters', parameters);
         let parametersValues = parameters.map(elem => this.evaluateExpression(elem));
+        console.log('parametersValues', parametersValues);
         if (signature.length === 0) {
             scope.setParametersList(parametersValues);
         } else {
