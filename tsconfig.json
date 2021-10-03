@@ -1,13 +1,14 @@
 {
     "compilerOptions": {
-      "outDir": "./test-js",
+      "baseUrl": ".",
+      "outDir": "./built", // fake output dif (haven't been used yet)
       "allowJs": true,
       "target": "es6",
       "module": "es2020",
       "sourceMap": true , 
       "moduleResolution":"node",
       "isolatedModules": true,
-      "esModuleInterop": true
+      "esModuleInterop": true,
     },
     "include": ["./src/**/*", "./tests/**/*"]
 }

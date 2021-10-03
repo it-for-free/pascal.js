@@ -6,6 +6,7 @@ import { Engine } from './src/Semantics/Engine';
 import { RuntimeError } from './src/Errors/RuntimeError';
 import { config } from './src/PascalJs/demoConfig';
 
+type my = 'test';
 
 var fileIO = new FileIO('example.pas', new ConsoleOutput());
 var lexicalAnalyzer = new LexicalAnalyzer(fileIO);

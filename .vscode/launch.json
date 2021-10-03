@@ -12,11 +12,12 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            // "program": "${workspaceFolder}/run.js",
-            "args": [
+            "program": "${workspaceFolder}/run.js",
+            "runtimeArgs": [  
+                "--loader=ts-node/esm",
                 "--es-module-specifier-resolution=node",
-                "${workspaceFolder}/run.js",
             ],
+            "console": "integratedTerminal",
         },
         {
             "type": "node",
@@ -25,7 +26,6 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
-            "runtimeArgs": ["--nolazy", "-r", "ts-node/register"],
             "args": [
                 "--experimental-vm-modules",
                 "node_modules/.bin/jest",

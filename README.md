@@ -11,7 +11,7 @@ npm ci
 Запуск:
 
 ```shell
-node --es-module-specifier-resolution=node run.js 
+node --es-module-specifier-resolution=node --loader ts-node/esm run.js 
 ```
 
 Запуск всех тестов:
