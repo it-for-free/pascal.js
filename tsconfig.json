@@ -1,12 +1,13 @@
 {
     "compilerOptions": {
-      "outDir": "./built",
+      "outDir": "./test-js",
       "allowJs": true,
       "target": "es6",
       "module": "es2020",
       "sourceMap": true , 
       "moduleResolution":"node",
       "isolatedModules": true,
+      "esModuleInterop": true
     },
     "include": ["./src/**/*", "./tests/**/*"]
 }
