@@ -7,16 +7,16 @@ import { Engine } from '../Semantics/Engine';
 import { RuntimeError } from '../Errors/RuntimeError';
 import { config } from './demoConfig';
 import { TypesIds } from '../Semantics/Variables/TypesIds';
+import { PascalJsConfig } from './types';
+
 export class PascalJs {
     /**
      * @type Engine  
      */
     engine;
 
-    /**
-     * @type RuntimeError
-     */
-    error;
+    error: RuntimeError;
+    config: PascalJsConfig;
 
     constructor(config) {
         this.config = config;
