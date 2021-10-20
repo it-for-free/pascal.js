@@ -2,11 +2,10 @@
 import { expect, test } from '@jest/globals';
 import { runFile } from '../../../helpers/testsHelper';
 
-let pjs = runFile(import.meta.url, 'function_as_parameter.pas');
-// insp(pjs.engine.tree);
+let pjs = runFile(import.meta.url, 'procedure_as_parameter.pas');
 
 test("write and writeln don't fail", () => {
-  expect(pjs.getVarValue('a')).toBe(13)
+  expect(pjs.getVarValue('a')).toBe(16)
 });
 
 
