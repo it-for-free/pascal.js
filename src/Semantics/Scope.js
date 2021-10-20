@@ -2,13 +2,18 @@ import { TypesIds } from './Variables/TypesIds';
 import { ScalarVariable } from './Variables/ScalarVariable';
 import { EnumVariable } from './Variables/EnumVariable';
 import { ArrayVariable } from './Variables/ArrayVariable';
+import { PointerVariable } from './Variables/PointerVariable';
+import { CallableVariable } from './Variables/CallableVariable';
 import { RuntimeError } from '../Errors/RuntimeError';
 import { ErrorsDescription } from '../Errors/ErrorsDescription';
 import { ErrorsCodes } from '../Errors/ErrorsCodes';
 import { ScalarType } from '../SyntaxAnalyzer/Tree/Types/ScalarType';
 import { AppliedNamedType } from '../SyntaxAnalyzer/Tree/Types/AppliedNamedType';
 import { EnumType } from '../SyntaxAnalyzer/Tree/Types/EnumType';
+import { FunctionType } from '../SyntaxAnalyzer/Tree/Types/FunctionType';
+import { ProcedureType } from '../SyntaxAnalyzer/Tree/Types/ProcedureType';
 import { ArrayType } from '../SyntaxAnalyzer/Tree/Types/ArrayType';
+import { PointerType } from '../SyntaxAnalyzer/Tree/Types/PointerType';
 import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
 import { IndexedIdentifier } from '../SyntaxAnalyzer/Tree/Arrays/IndexedIdentifier';
 import { IndexedFunctionCall } from '../SyntaxAnalyzer/Tree/Arrays/IndexedFunctionCall';
@@ -30,6 +35,7 @@ export class Scope
         this.cycleDepth = 0;
         this.errorsDescription = new ErrorsDescription;
         this.parametersList = null;
+        this.callableName = null;
     }
 
     addVariable(name, type, value = null, treeNode = null)
@@ -71,6 +77,12 @@ export class Scope
             return new EnumVariable(value, resolvedType);
         } else if (resolvedType instanceof ArrayType) {
             return this.createArrayVariable(value, type);
+        } else if (resolvedType instanceof PointerType) {
+            let targetType = this.resolveNamedType(type.type);
+            return new PointerVariable(value, targetType);
+        } else if (resolvedType instanceof FunctionType ||
+            resolvedType instanceof ProcedureType ) {
+            return new CallableVariable(resolvedType, value);
         }
     }
 
@@ -168,7 +180,8 @@ export class Scope
             let item = this.items[lowerCaseName];
 
             if (item instanceof ScalarVariable ||
-                item instanceof EnumVariable) {
+                item instanceof EnumVariable ||
+                item instanceof CallableVariable) {
                 if (this.sameType(item.getType(), type)) {
                     this.items[lowerCaseName].value = value;
                 } else {
@@ -224,7 +237,7 @@ export class Scope
             } else if (this.enumsItems.hasOwnProperty(lowerCaseName)) {
                 return this.enumsItems[lowerCaseName];
             } else {
-                this.addError(ErrorsCodes.variableNotDeclared, `Element '${lowerCaseName}' not declared.`, identifier);
+                return null;
             }
         }
     }
@@ -264,10 +277,38 @@ export class Scope
                 return typeA.typeId === typeB.typeId;
             } else if (typeA instanceof EnumType) {
                 return Object.is(typeA, typeB);
+            } else if(typeA instanceof FunctionType ||
+                    typeA instanceof ProcedureType){
+                let aParams = this.getParametersArray(typeA);
+                let bParams = this.getParametersArray(typeB);
+                let length = aParams.length;
+                if (length === bParams.length) {
+                    return typeA instanceof FunctionType ?
+                        this.sameType(typeA.returnType, typeB.returnType) :
+                        true;
+                } else {
+                    return false;
+                }
             }
         } else {
             return false;
         }
+    }
+
+    getParametersArray(callableType)
+    {
+        let parametersArray= [];
+        let counter = 0;
+        let length = callableType.signature.length;
+        for (let i=0; i < length; i++) {
+            let item = callableType.signature[i];
+            let identLength = item.identifiers.length;
+            for (let j=0; j < identLength; j++) {
+                parametersArray[counter++] = item;
+            }
+        }
+
+        return parametersArray;
     }
 
     addError(errorCode, errorText = null, treeNode = null)

@@ -6,6 +6,6 @@ export class FunctionItem extends ProcedureItem
     constructor()
     {
         super();
-        this.type = null;
+        this.returnType = null;
     }
 };

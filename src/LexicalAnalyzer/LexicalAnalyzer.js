@@ -221,7 +221,9 @@ export class LexicalAnalyzer
                 case '>':
                     this.char = this.fileIO.nextCh();
                     return this.getSymbol(SymbolsCodes.greater);
-
+                case '@':
+                    this.char = this.fileIO.nextCh();
+                    return this.getSymbol(SymbolsCodes.at);
                 case "'":
                     do {
                         this.char = this.fileIO.nextCh();

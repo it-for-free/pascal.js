@@ -1,11 +1,11 @@
 import { TypeBase } from './TypeBase';
 import { TypesIds } from '../../../Semantics/Variables/TypesIds';
 
-export class PointerType extends TypeBase
+export class RecordType extends TypeBase
 {
     constructor(symbol, type)
     {
-        super(symbol, TypesIds.POINTER);
+        super(symbol, TypesIds.RECORD);
         this.type = type;
     }
 }
