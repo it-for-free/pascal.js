@@ -8,4 +8,9 @@ export class RecordType extends TypeBase
         super(symbol, TypesIds.RECORD);
         this.type = type;
     }
+
+    toString()
+    {
+        return `record`;
+    }
 }

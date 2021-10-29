@@ -4,7 +4,6 @@ import { SymbolsDescription } from '../LexicalAnalyzer/SymbolsDescription';
 import { Assignation } from './Tree/Assignation';
 import { TakeElemByKeys } from './Tree/TakeElemByKeys';
 import { IndexedIdentifier } from './Tree/Arrays/IndexedIdentifier';
-import { IndexedFunctionCall } from './Tree/Arrays/IndexedFunctionCall';
 import { IndexRing } from './Tree/Arrays/IndexRing';
 import { GetByPointer } from './Tree/GetByPointer';
 import { GetPointer } from './Tree/GetPointer';
@@ -419,9 +418,8 @@ export class SyntaxAnalyzer
                     parametersList.push(parameters);
 
                 } while (this.symbol.symbolCode === SymbolsCodes.semicolon)
-
-                this.accept(SymbolsCodes.rightPar);
             }
+            this.accept(SymbolsCodes.rightPar);
         }
 
         return parametersList;
@@ -648,10 +646,12 @@ export class SyntaxAnalyzer
         if (this.symbol.symbolCode === SymbolsCodes.at) {
             let atSymbol = this.symbol;
             this.nextSym();
-            let identifier = this.symbol;
+            let identSymbol = this.symbol;
             this.accept(SymbolsCodes.ident);
+            let identifier = new Identifier(identSymbol);
+            let identifierBranch = this.scanIdentifierBranch(identifier);
 
-            return new GetPointer(atSymbol, identifier);
+            return new GetPointer(atSymbol, identifierBranch);
         }
 
         let simpleExpression = this.scanSimpleExpression();
@@ -808,8 +808,9 @@ export class SyntaxAnalyzer
 
             } while (this.symbol.symbolCode === SymbolsCodes.comma)
 
-            this.accept(SymbolsCodes.rightPar);
         }
+
+        this.accept(SymbolsCodes.rightPar);
 
         return parameters;
     }

@@ -12,4 +12,5 @@ export const ErrorsCodes = {
     identifierExpected: 112,
     elementIsNotInitialized: 113,
     notCallableElement: 114,
+    arrayExpected: 115,
 }

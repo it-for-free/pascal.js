@@ -16,7 +16,6 @@ import { ArrayType } from '../SyntaxAnalyzer/Tree/Types/ArrayType';
 import { PointerType } from '../SyntaxAnalyzer/Tree/Types/PointerType';
 import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
 import { IndexedIdentifier } from '../SyntaxAnalyzer/Tree/Arrays/IndexedIdentifier';
-import { IndexedFunctionCall } from '../SyntaxAnalyzer/Tree/Arrays/IndexedFunctionCall';
 import { IndexRing } from '../SyntaxAnalyzer/Tree/Arrays/IndexRing';
 import { Constant } from '../SyntaxAnalyzer/Tree/Constant';
 import { UnaryMinus } from '../SyntaxAnalyzer/Tree/UnaryMinus';
@@ -188,17 +187,44 @@ export class Scope
                     this.addTypeMismatchError(type, item, treeNode);
                 }
             } else if (item instanceof ArrayVariable) {
-                let indexRing = destination.indexRing;
-                let destinationType = this.getDestinationType(item.type, indexRing);
-                if (this.sameType(type, destinationType)) {
-                    item.setValue(indexRing, type, value);
-                } else {
-                    this.addTypeMismatchError(type, item, treeNode);
+
+                let destinationType = null;
+                if (destination instanceof Identifier) {
+                    destinationType = item.type;
+                    if (this.sameType(type, destinationType)) {
+                        this.setVariableObject(destination, value);
+                    } else {
+                        this.addTypeMismatchError(type, item, treeNode);
+                    }
+                } else if (destination instanceof IndexedIdentifier) {
+                    let indexRing = destination.indexRing;
+                    destinationType = this.getDestinationType(item.type, indexRing);
+                    if (this.sameType(type, destinationType)) {
+                        item.setValue(indexRing, type, value);
+                    } else {
+                        this.addTypeMismatchError(type, item, treeNode);
+                    }
                 }
+            } else if (item instanceof PointerVariable &&
+                    type instanceof PointerType) {
+
+                    if (this.sameType(item.type, type)) {
+                        item.variable = value.variable;
+                    } else {
+                        this.addTypeMismatchError(type, item, treeNode);
+                    }
             } else {
                 this.addError(ErrorsCodes.typesMismatch, null, treeNode);
             }
         }
+    }
+
+    setVariableObject(destinationIdentifier, variable)
+    {
+        let name = destinationIdentifier.symbol.stringValue;
+        let lowerCaseName = name.toLowerCase();
+
+        this.items[lowerCaseName] = variable;
     }
 
     addTypeMismatchError(type, item, treeNode)
@@ -210,8 +236,9 @@ export class Scope
 
     getDestinationType(arrayType, indexRing)
     {
-        return  arrayType instanceof ArrayType &&
-                indexRing !== null ?
+        return  (arrayType instanceof ArrayType &&
+                indexRing &&
+                indexRing !== null) ?
                 this.getDestinationType(arrayType.typeOfElements, indexRing.indexRing) :
                 arrayType;
     }
@@ -240,13 +267,6 @@ export class Scope
                 return null;
             }
         }
-    }
-
-    getElementByIndexedIdentifier(indexedIdentifier)
-    {
-        let identifier = indexedIdentifier.identifier;
-        let arrayVariable = this.getElementByIdentifier(identifier);
-        return arrayVariable.getByIndexRing(indexedIdentifier.indexRing);
     }
 
     getEnumElement(identifier)
@@ -289,6 +309,12 @@ export class Scope
                 } else {
                     return false;
                 }
+            } else if (typeA instanceof ArrayType) {
+                return this.sameType(typeA.typeOfElements, typeB.typeOfElements) &&
+                        typeA.leftIndex.symbol.value === typeB.leftIndex.symbol.value &&
+                        typeA.rightIndex.symbol.value === typeB.rightIndex.symbol.value;
+            } else if (typeA instanceof PointerType) {
+                return this.sameType(typeA.type, typeB.type);
             }
         } else {
             return false;

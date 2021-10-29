@@ -52,9 +52,12 @@ import { ErrorsDescription } from '../Errors/ErrorsDescription';
 import { ErrorsCodes } from '../Errors/ErrorsCodes';
 import { Break } from  '../SyntaxAnalyzer/Tree/Break';
 import { IndexedIdentifier } from '../SyntaxAnalyzer/Tree/Arrays/IndexedIdentifier';
-import { IndexedFunctionCall } from '../SyntaxAnalyzer/Tree/Arrays/IndexedFunctionCall';
 import { IndexRing } from '../SyntaxAnalyzer/Tree/Arrays/IndexRing';
 import { UnboundedParametersList } from '../Semantics/Signatures/UnboundedParametersList';
+import { ArrayVariable } from '../Semantics/Variables/ArrayVariable';
+import { GetByPointer } from '../SyntaxAnalyzer/Tree/GetByPointer';
+import { GetPointer } from '../SyntaxAnalyzer/Tree/GetPointer';
+import { PointerVariable } from './Variables/PointerVariable';
 
 export class Engine
 {
@@ -196,6 +199,17 @@ export class Engine
                 return  new CallableVariable(calledFunction.type, calledFunction);
             }
             this.addError(ErrorsCodes.variableNotDeclared, `Element '${name}' not declared.`, identifierBranchExpression);
+        } else if (identifierBranchExpression instanceof IndexedIdentifier) {
+            let currentScope = this.getCurrentScope();
+
+            let arrayVariable = this.evaluateIdentifierBranch(identifierBranchExpression.identifier);
+            if (!(arrayVariable instanceof ArrayVariable)) {
+                this.addError(ErrorsCodes.arrayExpected, 'Array expected', identifierBranchExpression);
+            }
+
+            identifierBranchExpression.indexRing = this.evaluateIndexRing(identifierBranchExpression.indexRing);
+            return arrayVariable.getByIndexRing(identifierBranchExpression.indexRing);
+
         } else if (identifierBranchExpression instanceof FunctionCall) {
             let isDeclaredProcedure = null;
             let isDeclaredFunction = null;
@@ -242,6 +256,9 @@ export class Engine
             this.treesCounter--;
             this.tree = this.trees[this.treesCounter];
             return result;
+        } else if (identifierBranchExpression instanceof GetByPointer) {
+            let pointerVariable = this.evaluateIdentifierBranch(identifierBranchExpression.pointer);
+            return pointerVariable.variable;
         }
     }
 
@@ -254,10 +271,12 @@ export class Engine
             let sourceExpression = sentence.sourceExpression;
             let expressionResult = this.evaluateExpression(sourceExpression);
             let type = expressionResult.getType();
-            let value = expressionResult instanceof Function ||
-                    expressionResult instanceof Procedure ?
+
+            let value = ( expressionResult instanceof ArrayVariable ||
+                    expressionResult instanceof PointerVariable ) ?
                     expressionResult :
                     expressionResult.value;
+
             if (destination instanceof IndexedIdentifier) {
                 destination.indexRing = this.evaluateIndexRing(destination.indexRing);
             }
@@ -440,7 +459,12 @@ export class Engine
 
     evaluateExpression(expression)
     {
-        if (expression instanceof Equal) {
+        if (expression instanceof GetPointer) {
+            let indentifierBranch = expression.identifier;
+            let identifierBranchResult = this.evaluateIdentifierBranch(indentifierBranch);
+            let type = identifierBranchResult.getType();
+            return new PointerVariable(identifierBranchResult, type);
+        } else if (expression instanceof Equal) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
@@ -630,14 +654,12 @@ export class Engine
     {
         if (expression instanceof Constant) {
             return new ScalarVariable(expression.symbol.value, expression.typeId);
-        } else if (expression instanceof IndexedIdentifier) {
-            let currentScope = this.getCurrentScope();
-            expression.indexRing = this.evaluateIndexRing(expression.indexRing);
-            return currentScope.getElementByIndexedIdentifier(expression);
         } else if (expression instanceof FunctionCall ||
-                expression instanceof Identifier) {
+                expression instanceof Identifier ||
+                expression instanceof IndexedIdentifier ||
+                expression instanceof GetByPointer) {
 
-            return  this.evaluateIdentifierBranch(expression);
+            return this.evaluateIdentifierBranch(expression);
         } else {
             return this.evaluateExpression(expression);
         }

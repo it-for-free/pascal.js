@@ -8,4 +8,9 @@ export class PointerType extends TypeBase
         super(symbol, TypesIds.POINTER);
         this.type = type;
     }
+
+    toString()
+    {
+        return `^${this.type}`;
+    }
 }
