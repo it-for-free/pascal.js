@@ -23,7 +23,7 @@ export class ArrayVariable extends BaseVariable
 
     setValue(indexRing, type, value)
     {
-        let indexExpression = indexRing.indexExpression;
+        let indexExpression = indexRing.evaluatedIndexExpression;
         let index = this.scope.getIntegerValueOfIndexVariable(indexExpression) + this.offset;
 
         if (index < 0 || index >= this.arrayLength) {
@@ -42,7 +42,7 @@ export class ArrayVariable extends BaseVariable
 
     getByIndexRing(indexRing)
     {
-        let indexExpression = indexRing.indexExpression;
+        let indexExpression = indexRing.evaluatedIndexExpression;
         let index = this.scope.getIntegerValueOfIndexVariable(indexExpression) + this.offset;
         if (index < 0 || index >= this.arrayLength) {
             this.scope.addError(ErrorsCodes.indexIsOutOfRange, '', indexRing);

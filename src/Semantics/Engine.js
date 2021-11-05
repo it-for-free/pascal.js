@@ -163,7 +163,7 @@ export class Engine
 
     evaluateIndexRing(indexRing)
     {
-        indexRing.indexExpression = this.evaluateExpression(indexRing.indexExpression);
+        indexRing.evaluatedIndexExpression = this.evaluateExpression(indexRing.indexExpression);
         if (indexRing.indexRing instanceof IndexRing) {
             this.evaluateIndexRing(indexRing.indexRing);
         }

@@ -7,6 +7,7 @@ export class IndexRing extends TreeNodeBase
         super(symbol);
         this.indexExpression = indexExpression;
         this.indexRing = indexRing;
+        this.evaluatedIndexExpression = null;
     }
 
     appendIndexRing(indexRing)
