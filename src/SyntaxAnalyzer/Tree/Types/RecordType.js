@@ -3,14 +3,32 @@ import { TypesIds } from '../../../Semantics/Variables/TypesIds';
 
 export class RecordType extends TypeBase
 {
-    constructor(symbol, type)
+    constructor(symbol, typesArray)
     {
         super(symbol, TypesIds.RECORD);
-        this.type = type;
+
+        let self = this;
+        this.typesList = {};
+
+        typesArray.forEach(elem => {
+            let type = elem.type;
+            elem.identifiers.forEach(identifier => {
+                let propertyName = identifier.symbol.value;
+                self.typesList[propertyName] = type;
+            });
+        })
     }
 
     toString()
     {
-        return `record`;
+        let properties = [];
+        let propertyName = null;
+
+        for (propertyName in this.typesList) {
+            properties.push(`${propertyName}: ` + this.typesList[propertyName].toString());
+        }
+
+        let types = properties.join(', ');
+        return `record(${types})`;
     }
 }

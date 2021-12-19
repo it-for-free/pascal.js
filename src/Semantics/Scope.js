@@ -3,6 +3,7 @@ import { ScalarVariable } from './Variables/ScalarVariable';
 import { EnumVariable } from './Variables/EnumVariable';
 import { ArrayVariable } from './Variables/ArrayVariable';
 import { PointerVariable } from './Variables/PointerVariable';
+import { RecordVariable } from './Variables/RecordVariable';
 import { CallableVariable } from './Variables/CallableVariable';
 import { RuntimeError } from '../Errors/RuntimeError';
 import { ErrorsDescription } from '../Errors/ErrorsDescription';
@@ -14,12 +15,14 @@ import { FunctionType } from '../SyntaxAnalyzer/Tree/Types/FunctionType';
 import { ProcedureType } from '../SyntaxAnalyzer/Tree/Types/ProcedureType';
 import { ArrayType } from '../SyntaxAnalyzer/Tree/Types/ArrayType';
 import { PointerType } from '../SyntaxAnalyzer/Tree/Types/PointerType';
+import { RecordType } from '../SyntaxAnalyzer/Tree/Types/RecordType';
 import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
 import { IndexedIdentifier } from '../SyntaxAnalyzer/Tree/Arrays/IndexedIdentifier';
 import { IndexRing } from '../SyntaxAnalyzer/Tree/Arrays/IndexRing';
 import { Constant } from '../SyntaxAnalyzer/Tree/Constant';
 import { UnaryMinus } from '../SyntaxAnalyzer/Tree/UnaryMinus';
-
+import { ProcedureItem } from './ProcedureItem';
+import { FunctionItem } from './FunctionItem';
 
 
 export class Scope
@@ -37,8 +40,9 @@ export class Scope
         this.callableName = null;
     }
 
-    addVariable(name, type, value = null, treeNode = null)
+    addVariable(identifier, type, value = null, treeNode = null)
     {
+        let name = identifier.symbol.value;
         let lowerCaseName = name.toLowerCase();
         if (this.constants.hasOwnProperty(lowerCaseName)) {
             this.addError(ErrorsCodes.identifierAlreadyUsed, `Constant '${lowerCaseName}' declared.`, treeNode === null ? type : treeNode);
@@ -80,8 +84,9 @@ export class Scope
             let targetType = this.resolveNamedType(type.type);
             return new PointerVariable(value, targetType);
         } else if (resolvedType instanceof FunctionType ||
-            resolvedType instanceof ProcedureType ) {
-            return new CallableVariable(resolvedType, value);
+            resolvedType instanceof ProcedureType ||
+            resolvedType instanceof RecordType) {
+            return this.createDefaultVariable(resolvedType);
         }
     }
 
@@ -191,8 +196,8 @@ export class Scope
                 let destinationType = null;
                 if (destination instanceof Identifier) {
                     destinationType = item.type;
-                    if (this.sameType(type, destinationType)) {
-                        this.setVariableObject(destination, value);
+                    if (this.sameType(type, destinationType)) {;
+                        this.setVariableObject(destination, value.clone());
                     } else {
                         this.addTypeMismatchError(type, item, treeNode);
                     }
@@ -200,6 +205,9 @@ export class Scope
                     let indexRing = destination.indexRing;
                     destinationType = this.getDestinationType(item.type, indexRing);
                     if (this.sameType(type, destinationType)) {
+                        if (value instanceof ArrayVariable) {
+                            value = value.clone();
+                        }
                         item.setValue(indexRing, type, value);
                     } else {
                         this.addTypeMismatchError(type, item, treeNode);
@@ -216,6 +224,104 @@ export class Scope
             } else {
                 this.addError(ErrorsCodes.typesMismatch, null, treeNode);
             }
+        }
+    }
+
+    /**
+     *  Для ScalarVariable используется только typeId.
+     *  В type передаётся тип или id типа.
+     */
+    setVariableValue(destination, variable, treeNode = null)
+    {
+        let type = variable.getType();
+        let identifier = null;
+
+        if (destination instanceof Identifier) {
+            identifier = destination;
+        } else if (destination instanceof IndexedIdentifier) {
+            identifier = destination.identifier;
+        }
+
+        let name = identifier.symbol.stringValue;
+        let lowerCaseName = name.toLowerCase();
+        if (!this.items.hasOwnProperty(lowerCaseName)) {
+            this.addError(ErrorsCodes.variableNotDeclared, `Variable '${lowerCaseName}' not declared.`, treeNode);
+        } else {
+            let item = this.items[lowerCaseName];
+
+            if (item instanceof ScalarVariable ||
+                item instanceof EnumVariable ||
+                item instanceof CallableVariable ||
+                item instanceof ArrayVariable &&
+                destination instanceof Identifier ||
+                item instanceof RecordVariable ) {
+
+                if (this.sameType(item.getType(), type)) {
+                } else {
+                    this.addTypeMismatchError(type, item, treeNode);
+                }
+            }
+
+            if (item instanceof ScalarVariable ||
+                item instanceof EnumVariable ||
+                item instanceof CallableVariable) {
+
+                this.items[lowerCaseName].value = variable.value;
+            } else if (item instanceof ArrayVariable) {
+                if (destination instanceof Identifier) {
+                    this.setVariableObject(destination, variable.clone());
+                } else if (destination instanceof IndexedIdentifier) {
+                    let indexRing = destination.indexRing;
+                    let destinationType = this.getDestinationType(item.type, indexRing);
+                    if (this.sameType(type, destinationType)) {
+//                        if (variable instanceof ScalarVariable ||
+//                            variable instanceof EnumVariable ||
+//                            variable instanceof CallableVariable) {
+////                            variable = variable.value;
+//                        } else {
+//                        }
+                        variable = variable.clone();
+                        item.setValue(indexRing, type, variable);
+                    } else {
+                        this.addTypeMismatchError(type, item, treeNode);
+                    }
+                }
+            } else if (item instanceof RecordVariable) {
+                this.setVariableObject(destination, variable.clone());
+            } else if (item instanceof PointerVariable &&
+                type instanceof PointerType) {
+                if (this.sameType(item.type, type)) {
+                    item.variable = variable.variable;
+                } else {
+                    this.addTypeMismatchError(type, item, treeNode);
+                }
+            } else {
+                this.addError(ErrorsCodes.typesMismatch, null, treeNode);
+            }
+        }
+    }
+
+    setRecordVariableProperty(recordVariable, propertyIdentifier, variable)
+    {
+        let type = variable.getType();
+
+        let item = recordVariable.getByPropertyIdentifier(propertyIdentifier);
+
+        if (this.sameType(item.getType(), type)) {
+        } else {
+            this.addTypeMismatchError(type, item, propertyIdentifier);
+        }
+
+        if (item instanceof ScalarVariable ||
+            item instanceof EnumVariable ||
+            item instanceof CallableVariable) {
+            item.value = variable.value;
+        } else if (item instanceof ArrayVariable ||
+            item instanceof RecordVariable) {
+
+            recordVariable.setPropertyByPropertyIdentifier(propertyIdentifier, variable.clone());
+        } else {
+            this.addError(ErrorsCodes.typesMismatch, null, propertyIdentifier);
         }
     }
 
@@ -315,6 +421,19 @@ export class Scope
                         typeA.rightIndex.symbol.value === typeB.rightIndex.symbol.value;
             } else if (typeA instanceof PointerType) {
                 return this.sameType(typeA.type, typeB.type);
+            } else if (typeA instanceof RecordType) {
+                let sameSet = Object.keys(typeA.typesList).length === Object.keys(typeB.typesList).length;
+                let propertyName = null;
+                for (propertyName in typeA.typesList) {
+                    if (!sameSet) {
+                        return false;
+                    }
+                    sameSet = sameSet &&
+                        typeB.typesList.hasOwnProperty(propertyName) &&
+                        this.sameType(typeA.typesList[propertyName], typeB.typesList[propertyName])
+                }
+
+                return sameSet;
             }
         } else {
             return false;
@@ -426,5 +545,71 @@ export class Scope
 
         let variable = this.parentScope.getVariableByReference(variableIdentifier);
         this.items[lowerCaseName] = variable;
+    }
+
+    createDefaultVariable(typeObject)
+    {
+        if (typeObject instanceof ScalarType) {
+            let defaultValue = null;
+
+            switch (typeObject.typeId) {
+                case TypesIds.BOOLEAN:
+                    defaultValue = false;
+                    break;
+                case TypesIds.CHAR:
+                    defaultValue = String.fromCharCode(0);
+                    break;
+                case TypesIds.INTEGER:
+                    defaultValue = 0;
+                    break;
+                case TypesIds.REAL:
+                    defaultValue = 0;
+                    break;
+                case TypesIds.STRING:
+                    defaultValue = '';
+            }
+
+            return new ScalarVariable(defaultValue, typeObject.typeId);
+        } else if (typeObject instanceof RecordType) {
+            return new RecordVariable(typeObject, this);
+        } else if (typeObject instanceof ProcedureType) {
+            let procedureItem = new ProcedureItem();
+            procedureItem.signature = typeObject.signature;
+            procedureItem.type = typeObject;
+
+            return new CallableVariable(typeObject, procedureItem);
+        } else if (typeObject instanceof PointerType) {
+            return new PointerVariable(null, typeObject);
+        } else if (typeObject instanceof FunctionType) {
+            let functionItem = new FunctionItem();
+            functionItem.signature = typeObject.signature;
+            functionItem.returnType = typeObject.returnType;
+            functionItem.name = new Identifier({
+                value: 'outputValue'
+            });
+            functionItem.type = typeObject;
+
+            return new CallableVariable(typeObject, functionItem);
+        } else if (typeObject instanceof ArrayType) {
+            let resolvedType = this.resolveNamedType(typeObject);
+            let variable = new ArrayVariable(resolvedType, this);
+
+            let leftIndex = resolvedType.leftIndex;
+            let rightIndex = resolvedType.rightIndex;
+            let leftIntegerIndex = this.getIntegerValueOfIndexConstant(leftIndex);
+            let rightIntegerIndex = this.getIntegerValueOfIndexConstant(rightIndex);
+
+            let minIntegerIndex = Math.min(leftIntegerIndex, rightIntegerIndex);
+            let maxIntegerIndex = Math.max(leftIntegerIndex, rightIntegerIndex);
+            let offset = -minIntegerIndex;
+
+            variable.offset = offset;
+            variable.arrayLength = maxIntegerIndex - minIntegerIndex + 1;
+            variable.leftIntegerIndex = 0;
+            variable.rightIntegerIndex = maxIntegerIndex;
+            variable.rightIntegerIndex = maxIntegerIndex;
+
+            return variable;
+        }
     }
 }

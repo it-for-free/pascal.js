@@ -33,6 +33,7 @@ import { UnaryMinus } from '../SyntaxAnalyzer/Tree/UnaryMinus';
 import { Not } from '../SyntaxAnalyzer/Tree/Not';
 import { CompoundOperator } from '../SyntaxAnalyzer/Tree/CompoundOperator';
 import { Implication } from '../SyntaxAnalyzer/Tree/Implication';
+import { TakeField } from '../SyntaxAnalyzer/Tree/TakeField';
 import { WhileCycle } from '../SyntaxAnalyzer/Tree/Loops/WhileCycle';
 import { RepeatCycle } from '../SyntaxAnalyzer/Tree/Loops/RepeatCycle';
 import { ForCycle } from '../SyntaxAnalyzer/Tree/Loops/ForCycle';
@@ -112,8 +113,7 @@ export class Engine
                         function(identifier)
                         {
                             if (identifier instanceof Identifier) {
-                                let name = identifier.symbol.value;
-                                currentScope.addVariable(name, variablesDeclaration.variablesType, null, identifier);
+                                currentScope.addVariable(identifier, variablesDeclaration.variablesType, null, identifier);
 
                             } else {
                                 throw 'Identifier must be here!';
@@ -224,8 +224,10 @@ export class Engine
             let procedureName = null;
             if (calledElem instanceof FunctionItem ||
                     calledElem instanceof Function) {
-                procedureName = calledElem.name.symbol.value.toLowerCase();
-                scope.addVariable(procedureName, calledElem.type.returnType);
+                let procedureIdentifier = calledElem.name;
+                procedureName = procedureIdentifier.symbol.value.toLowerCase();
+
+                scope.addVariable(procedureIdentifier, calledElem.type.returnType);
                 scope.callableName = calledElem.name.symbol.value;
             }
 
@@ -259,6 +261,10 @@ export class Engine
         } else if (identifierBranchExpression instanceof GetByPointer) {
             let pointerVariable = this.evaluateIdentifierBranch(identifierBranchExpression.pointer);
             return pointerVariable.variable;
+        } else if (identifierBranchExpression instanceof TakeField) {
+            let baseExpression = this.evaluateIdentifierBranch(identifierBranchExpression.baseExpression);
+            let propertyIdentifier = identifierBranchExpression.subField;
+            return baseExpression.getByPropertyIdentifier(propertyIdentifier);
         }
     }
 
@@ -272,16 +278,19 @@ export class Engine
             let expressionResult = this.evaluateExpression(sourceExpression);
             let type = expressionResult.getType();
 
-            let value = ( expressionResult instanceof ArrayVariable ||
-                    expressionResult instanceof PointerVariable ) ?
-                    expressionResult :
-                    expressionResult.value;
+            if (destination instanceof TakeField) {
+                let recordVariable = this.evaluateIdentifierBranch(destination.baseExpression);
+                let propertyIdentifier = destination.subField;
 
-            if (destination instanceof IndexedIdentifier) {
-                destination.indexRing = this.evaluateIndexRing(destination.indexRing);
+                currentScope.setRecordVariableProperty(recordVariable, propertyIdentifier, expressionResult);
+
+            } else {
+                if (destination instanceof IndexedIdentifier) {
+                    destination.indexRing = this.evaluateIndexRing(destination.indexRing);
+                }
+
+                currentScope.setVariableValue(destination, expressionResult, sentence.destination);
             }
-
-            currentScope.setValue(destination, type, value, sentence.destination);
         } else if (sentence instanceof CompoundOperator) {
             if (sentence.sentences) {
                 let sentences = sentence.sentences;
@@ -438,7 +447,6 @@ export class Engine
                 let identifiers = appliedType.identifiers;
                 let byReference = appliedType.byReference;
                 identifiers.forEach(function(identifier) {
-                    let variableName = identifier.symbol.value;
                     let type = appliedType.type;
                     let parameter = parameters[parametersCounter];
                     if (byReference) {
@@ -448,7 +456,7 @@ export class Engine
                         scope.addVariableByReference(parameter, identifier);
                     } else {
                         let result = self.evaluateExpression(parameter);
-                        scope.addVariable(variableName, type);
+                        scope.addVariable(identifier, type);
                         scope.setValue(identifier, type, result.value, identifier);
                     }
                     parametersCounter++;
@@ -657,7 +665,8 @@ export class Engine
         } else if (expression instanceof FunctionCall ||
                 expression instanceof Identifier ||
                 expression instanceof IndexedIdentifier ||
-                expression instanceof GetByPointer) {
+                expression instanceof GetByPointer ||
+                expression instanceof TakeField) {
 
             return this.evaluateIdentifierBranch(expression);
         } else {

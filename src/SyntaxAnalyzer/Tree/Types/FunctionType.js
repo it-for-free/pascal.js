@@ -1,5 +1,6 @@
 import { TypeBase } from './TypeBase';
 import { TypesIds } from '../../../Semantics/Variables/TypesIds';
+import { CallableVariable } from '../../../Semantics/Variables/CallableVariable';
 
 export class FunctionType extends TypeBase
 {

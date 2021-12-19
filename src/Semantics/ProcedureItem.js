@@ -1,4 +1,3 @@
-import { Scope } from './Scope';
 import { ProgramBase } from '../SyntaxAnalyzer/Tree/ProgramBase';
 
 export class ProcedureItem extends ProgramBase

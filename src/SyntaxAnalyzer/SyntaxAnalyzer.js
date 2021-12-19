@@ -18,6 +18,7 @@ import { Identifier } from './Tree/Identifier';
 import { FunctionCall } from './Tree/FunctionCall';
 import { ProcedureCall } from './Tree/ProcedureCall';
 import { ScalarType } from './Tree/Types/ScalarType';
+import { RecordType } from './Tree/Types/RecordType';
 import { AppliedNamedType } from './Tree/Types/AppliedNamedType';
 import { VariablesDeclaration } from './Tree/VariablesDeclaration';
 import { ConstantDeclaration } from './Tree/ConstantDeclaration';
@@ -304,6 +305,49 @@ export class SyntaxAnalyzer
             this.nextSym();
             procedureType.signature = this.scanParametersList();
             return procedureType;
+        } else if (this.symbol.symbolCode === SymbolsCodes.recordSy) {
+            let recordSymbol = this.symbol;
+            this.nextSym();
+
+            let recordElems = [];
+
+            do {
+                if (recordElems.length > 0) {
+                    if (this.symbol.symbolCode === SymbolsCodes.semicolon ) {
+                        this.nextSym();
+                    }
+                    if (this.symbol.symbolCode === SymbolsCodes.endSy) {
+                        break;
+                    }
+                }
+
+                let parameters = new TypeApplied(this.symbol);
+
+                let identifiers = [];
+
+                do {
+                    if (identifiers.length > 0 &&
+                        this.symbol.symbolCode === SymbolsCodes.comma) {
+                        this.nextSym();
+                    }
+
+                    identifiers.push(new Identifier(this.symbol));
+                    this.accept(SymbolsCodes.ident);
+
+                } while (this.symbol.symbolCode === SymbolsCodes.comma)
+
+                this.accept(SymbolsCodes.colon);
+                parameters.identifiers = identifiers;
+                parameters.type = this.scanType();
+
+                recordElems.push(parameters);
+
+            } while (this.symbol.symbolCode === SymbolsCodes.semicolon)
+
+            this.accept(SymbolsCodes.endSy);
+
+            return new RecordType(recordSymbol, recordElems);
+
         }
     }
 

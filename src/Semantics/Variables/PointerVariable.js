@@ -14,4 +14,9 @@ export class PointerVariable extends BaseVariable
         this.type = new PointerType(null, targetType);
         this.variable = variable;
     }
+
+    clone()
+    {
+        return new PointerVariable(this.variable, this.type);
+    }
 }

@@ -18,7 +18,7 @@ var symbol = null;
 //}
 
 var syntaxAnalyzer = new SyntaxAnalyzer(lexicalAnalyzer);
-try {
+//try {
     var tree = syntaxAnalyzer.analyze();
 //    console.dir(tree, { depth: null });
 
@@ -26,8 +26,8 @@ try {
     engine.run();
 //    console.dir(engine.scopes, { depth: null });
 //    console.dir(engine.scopes[0].items, { depth: null });
-} catch (e) {
-    if (e instanceof RuntimeError) {
-        fileIO.printListing(e);
-    }
-}
+//} catch (e) {
+//    if (e instanceof RuntimeError) {
+//        fileIO.printListing(e);
+//    }
+//}

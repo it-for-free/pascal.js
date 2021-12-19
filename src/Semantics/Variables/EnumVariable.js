@@ -21,4 +21,9 @@ export class EnumVariable extends BaseVariable
             }
         }
     }
+
+    clone()
+    {
+        return new EnumVariable(this.value, this.type);
+    }
 }

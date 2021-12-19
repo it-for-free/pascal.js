@@ -9,4 +9,9 @@ export class CallableVariable extends BaseVariable
         this.typeId = type.typeId;
         this.value = value;
     }
+
+    clone()
+    {
+        return new CallableVariable(this.type, this.value);
+    }
 }
