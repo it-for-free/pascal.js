@@ -1,6 +1,8 @@
 import { ProcedureItem } from '../ProcedureItem';
 import { EnumVariable } from '../Variables/EnumVariable';
 import { ScalarVariable } from '../Variables/ScalarVariable';
+import { UnboundedParametersList } from '../Signatures/UnboundedParametersList';
+import { ProcedureType } from '../../SyntaxAnalyzer/Tree/Types/ProcedureType';
 
 export class WriteLn extends ProcedureItem
 {
@@ -9,6 +11,7 @@ export class WriteLn extends ProcedureItem
         super();
         this.outputStream = outputStream;
         this.ouputNewLineSymbol = ouputNewLineSymbol;
+        this.type = new ProcedureType(null, new UnboundedParametersList(), null);
     }
 
     innerRun(scope)

@@ -11,4 +11,7 @@ export const ErrorsCodes = {
     indexIsOutOfRange: 111,
     identifierExpected: 112,
     elementIsNotInitialized: 113,
+    notCallableElement: 114,
+    arrayExpected: 115,
+    recordPropertyIsNotDefined: 116,
 }

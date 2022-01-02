@@ -69,6 +69,7 @@ export class SymbolsDescription
             [SymbolsCodes.packedSy, 'packed'],
             [SymbolsCodes.recordSy, 'record'],
             [SymbolsCodes.repeatSy, 'repeat'],
+            [SymbolsCodes.resultSy, 'result'],
             [SymbolsCodes.integerSy, 'integer'],
             [SymbolsCodes.programSy, 'program'],
             [SymbolsCodes.functionSy, 'function'],

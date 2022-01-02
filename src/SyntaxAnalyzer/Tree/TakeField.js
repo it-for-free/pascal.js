@@ -2,11 +2,10 @@ import { TreeNodeBase } from './TreeNodeBase';
 
 export class TakeField extends TreeNodeBase
 {
-    constructor(symbol, field, subField)
+    constructor(symbol, baseExpression, subField)
     {
         super(symbol);
-        this.field = field;
+        this.baseExpression = baseExpression;
         this.subField = subField;
     }
 }
-

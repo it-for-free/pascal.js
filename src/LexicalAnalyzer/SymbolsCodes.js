@@ -24,6 +24,7 @@ export const SymbolsCodes = {
     rComment        :73,   /* *) */
     assign          :51,   /* := */
     twoPoints       :74,   /* .. */
+    at              :75,   /* @ */
     ident           :2,    /* Identifier */
     floatC          :82,   /* Float Constant */
     intC            :15,   /* Integer Constant */
@@ -73,4 +74,5 @@ export const SymbolsCodes = {
     breakSy         :138,
     trueSy          :139,
     falseSy         :140,
+    resultSy        :141,
 };

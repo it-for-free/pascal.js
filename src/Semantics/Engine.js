@@ -1,6 +1,9 @@
 import { Scope } from './Scope';
+import { FunctionItem } from './FunctionItem';
+import { ProcedureItem } from './ProcedureItem';
 import { ScalarVariable } from './Variables/ScalarVariable';
 import { EnumVariable } from './Variables/EnumVariable';
+import { CallableVariable } from './Variables/CallableVariable';
 import { TypesIds } from './Variables/TypesIds';
 import { VariablesDeclaration } from '../SyntaxAnalyzer/Tree/VariablesDeclaration';
 import { TypeDeclaration } from '../SyntaxAnalyzer/Tree/TypeDeclaration';
@@ -8,6 +11,9 @@ import { ConstantDeclaration } from '../SyntaxAnalyzer/Tree/ConstantDeclaration'
 import { ScalarType } from '../SyntaxAnalyzer/Tree/Types/ScalarType';
 import { ArrayType } from '../SyntaxAnalyzer/Tree/Types/ArrayType';
 import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
+import { Function } from '../SyntaxAnalyzer/Tree/Function';
+import { Procedure } from '../SyntaxAnalyzer/Tree/Procedure';
+import { SetResult } from '../SyntaxAnalyzer/Tree/SetResult';
 import { Assignation } from '../SyntaxAnalyzer/Tree/Assignation';
 import { SymbolsCodes } from '../LexicalAnalyzer/SymbolsCodes';
 import { Constant } from '../SyntaxAnalyzer/Tree/Constant';
@@ -27,6 +33,7 @@ import { UnaryMinus } from '../SyntaxAnalyzer/Tree/UnaryMinus';
 import { Not } from '../SyntaxAnalyzer/Tree/Not';
 import { CompoundOperator } from '../SyntaxAnalyzer/Tree/CompoundOperator';
 import { Implication } from '../SyntaxAnalyzer/Tree/Implication';
+import { TakeField } from '../SyntaxAnalyzer/Tree/TakeField';
 import { WhileCycle } from '../SyntaxAnalyzer/Tree/Loops/WhileCycle';
 import { RepeatCycle } from '../SyntaxAnalyzer/Tree/Loops/RepeatCycle';
 import { ForCycle } from '../SyntaxAnalyzer/Tree/Loops/ForCycle';
@@ -46,8 +53,12 @@ import { ErrorsDescription } from '../Errors/ErrorsDescription';
 import { ErrorsCodes } from '../Errors/ErrorsCodes';
 import { Break } from  '../SyntaxAnalyzer/Tree/Break';
 import { IndexedIdentifier } from '../SyntaxAnalyzer/Tree/Arrays/IndexedIdentifier';
-import { IndexedFunctionCall } from '../SyntaxAnalyzer/Tree/Arrays/IndexedFunctionCall';
 import { IndexRing } from '../SyntaxAnalyzer/Tree/Arrays/IndexRing';
+import { UnboundedParametersList } from '../Semantics/Signatures/UnboundedParametersList';
+import { ArrayVariable } from '../Semantics/Variables/ArrayVariable';
+import { GetByPointer } from '../SyntaxAnalyzer/Tree/GetByPointer';
+import { GetPointer } from '../SyntaxAnalyzer/Tree/GetPointer';
+import { PointerVariable } from './Variables/PointerVariable';
 
 export class Engine
 {
@@ -86,8 +97,6 @@ export class Engine
                 }
             );
         }
-
-//        console.dir(this.scopes, { depth: null });
     }
 
     setVariables()
@@ -104,8 +113,7 @@ export class Engine
                         function(identifier)
                         {
                             if (identifier instanceof Identifier) {
-                                let name = identifier.symbol.value;
-                                currentScope.addVariable(name, variablesDeclaration.variablesType, null, identifier);
+                                currentScope.addVariable(identifier, variablesDeclaration.variablesType, null, identifier);
 
                             } else {
                                 throw 'Identifier must be here!';
@@ -155,12 +163,109 @@ export class Engine
 
     evaluateIndexRing(indexRing)
     {
-        indexRing.indexExpression = this.evaluateExpression(indexRing.indexExpression);
+        indexRing.evaluatedIndexExpression = this.evaluateExpression(indexRing.indexExpression);
         if (indexRing.indexRing instanceof IndexRing) {
             this.evaluateIndexRing(indexRing.indexRing);
         }
 
         return indexRing;
+    }
+
+    evaluateIdentifierBranch(identifierBranchExpression)
+    {
+        if (identifierBranchExpression instanceof Identifier) {
+            let currentScope = this.getCurrentScope();
+            let name = identifierBranchExpression.symbol.value;
+            let result = null;
+            result = currentScope.getElementByIdentifier(identifierBranchExpression);
+
+            if (result !== null) {
+                return result;
+            }
+            let lowerCaseName = name.toLowerCase();
+
+            let isDeclaredProcedure = this.tree.procedures.hasOwnProperty(lowerCaseName);
+            let procedure = isDeclaredProcedure ?
+                this.tree.procedures[lowerCaseName]:
+                this.proceduresStore.getProcedure(lowerCaseName);
+            if (procedure !== null) {
+                return new CallableVariable(procedure.type, procedure);
+            }
+            let isDeclaredFunction = this.tree.functions.hasOwnProperty(lowerCaseName);
+            let calledFunction = isDeclaredFunction ?
+                this.tree.functions[lowerCaseName]:
+                this.functionsStore.getFunction(lowerCaseName);
+            if (calledFunction !== null) {
+                return  new CallableVariable(calledFunction.type, calledFunction);
+            }
+            this.addError(ErrorsCodes.variableNotDeclared, `Element '${name}' not declared.`, identifierBranchExpression);
+        } else if (identifierBranchExpression instanceof IndexedIdentifier) {
+            let currentScope = this.getCurrentScope();
+
+            let arrayVariable = this.evaluateIdentifierBranch(identifierBranchExpression.identifier);
+            if (!(arrayVariable instanceof ArrayVariable)) {
+                this.addError(ErrorsCodes.arrayExpected, 'Array expected', identifierBranchExpression);
+            }
+
+            identifierBranchExpression.indexRing = this.evaluateIndexRing(identifierBranchExpression.indexRing);
+            return arrayVariable.getByIndexRing(identifierBranchExpression.indexRing);
+
+        } else if (identifierBranchExpression instanceof FunctionCall) {
+            let isDeclaredProcedure = null;
+            let isDeclaredFunction = null;
+
+            let returnedElem = this.evaluateIdentifierBranch(identifierBranchExpression.identifierBranch);
+            let calledElem = returnedElem instanceof CallableVariable ?
+                        returnedElem.value :
+                        returnedElem;
+
+            let currentScope = this.getCurrentScope();
+            let scope = new Scope(currentScope);
+            let procedureName = null;
+            if (calledElem instanceof FunctionItem ||
+                    calledElem instanceof Function) {
+                let procedureIdentifier = calledElem.name;
+                procedureName = procedureIdentifier.symbol.value.toLowerCase();
+
+                scope.addVariable(procedureIdentifier, calledElem.type.returnType);
+                scope.callableName = calledElem.name.symbol.value;
+            }
+
+            this.addParametersToScope(identifierBranchExpression.parameters, calledElem.type.signature, scope);
+
+            this.treesCounter++;
+
+            this.tree = calledElem;
+            this.trees[this.treesCounter] = this.tree;
+            this.currentScopeId++;
+            this.scopes[this.currentScopeId] = scope;
+
+            this.run();
+
+            if (typeof calledElem.innerRun === 'function' ) {
+                calledElem.innerRun(scope);
+            }
+
+            let result = null;
+            if (calledElem instanceof FunctionItem ||
+                    calledElem instanceof Function) {
+                result = scope.getVariable(procedureName);
+            }
+
+            delete this.scopes[this.currentScopeId];
+
+            this.currentScopeId--;
+            this.treesCounter--;
+            this.tree = this.trees[this.treesCounter];
+            return result;
+        } else if (identifierBranchExpression instanceof GetByPointer) {
+            let pointerVariable = this.evaluateIdentifierBranch(identifierBranchExpression.pointer);
+            return pointerVariable.variable;
+        } else if (identifierBranchExpression instanceof TakeField) {
+            let baseExpression = this.evaluateIdentifierBranch(identifierBranchExpression.baseExpression);
+            let propertyIdentifier = identifierBranchExpression.subField;
+            return baseExpression.getByPropertyIdentifier(propertyIdentifier);
+        }
     }
 
     evaluateSentence(sentence)
@@ -172,12 +277,20 @@ export class Engine
             let sourceExpression = sentence.sourceExpression;
             let expressionResult = this.evaluateExpression(sourceExpression);
             let type = expressionResult.getType();
-            let value = expressionResult.value;
-            if (destination instanceof IndexedIdentifier) {
-                destination.indexRing = this.evaluateIndexRing(destination.indexRing);
-            }
 
-            currentScope.setValue(destination, type, value, sentence.destination);
+            if (destination instanceof TakeField) {
+                let recordVariable = this.evaluateIdentifierBranch(destination.baseExpression);
+                let propertyIdentifier = destination.subField;
+
+                currentScope.setRecordVariableProperty(recordVariable, propertyIdentifier, expressionResult);
+
+            } else {
+                if (destination instanceof IndexedIdentifier) {
+                    destination.indexRing = this.evaluateIndexRing(destination.indexRing);
+                }
+
+                currentScope.setVariableValue(destination, expressionResult, sentence.destination);
+            }
         } else if (sentence instanceof CompoundOperator) {
             if (sentence.sentences) {
                 let sentences = sentence.sentences;
@@ -197,39 +310,9 @@ export class Engine
             } else {
                 return this.evaluateSentence(sentence.right);
             }
-        } else if (sentence instanceof ProcedureCall) {
-
-            let procedureName = sentence.identifier.symbol.value;
-
-            let isDeclaredProcedure = this.tree.procedures.hasOwnProperty(procedureName);
-            let procedure = isDeclaredProcedure ?
-                this.tree.procedures[procedureName]:
-                this.proceduresStore.getProcedure(procedureName);
-
-            if (procedure === null) {
-                this.addError(ErrorsCodes.nameNotDescribed, `Procedure '${procedureName}' is not declared!`, sentence.identifier);
-            }
-
-            let currentScope = this.getCurrentScope();
-            let scope = new Scope(currentScope);
-            this.addParametersToScope(sentence.parameters, procedure.signature, scope);
-            this.treesCounter++;
-            this.tree = procedure;
-            this.currentScopeId++;
-            this.scopes[this.currentScopeId] = scope;
-
-            this.run();
-
-            if (!isDeclaredProcedure &&
-                typeof procedure.innerRun === 'function' ) {
-                procedure.innerRun(scope);
-            }
-
-            delete this.scopes[this.currentScopeId];
-
-            this.currentScopeId--;
-            this.treesCounter--;
-            this.tree = this.trees[this.treesCounter];
+        } else if ( sentence instanceof FunctionCall ||
+                    sentence instanceof ProcedureCall) {
+            return this.evaluateIdentifierBranch(sentence);
         } else if (sentence instanceof WhileCycle) {
             let currentScope = this.getCurrentScope();
             currentScope.cycleDepth++;
@@ -345,13 +428,17 @@ export class Engine
             } else {
                 return sentence;
             }
+        } else if (sentence instanceof SetResult) {
+            let currentScope = this.getCurrentScope();
+            let result = this.evaluateExpression(sentence.expression);
+            currentScope.setValue(this.tree.name, result.getType(), result);
         }
     }
 
     addParametersToScope(parameters, signature, scope)
     {
-        let parametersValues = parameters.map(elem => this.evaluateExpression(elem));
-        if (signature.length === 0) {
+        if (signature instanceof UnboundedParametersList) {
+            let parametersValues = parameters.map(elem => this.evaluateExpression(elem));
             scope.setParametersList(parametersValues);
         } else {
             let self = this;
@@ -360,7 +447,6 @@ export class Engine
                 let identifiers = appliedType.identifiers;
                 let byReference = appliedType.byReference;
                 identifiers.forEach(function(identifier) {
-                    let variableName = identifier.symbol.value;
                     let type = appliedType.type;
                     let parameter = parameters[parametersCounter];
                     if (byReference) {
@@ -370,7 +456,7 @@ export class Engine
                         scope.addVariableByReference(parameter, identifier);
                     } else {
                         let result = self.evaluateExpression(parameter);
-                        scope.addVariable(variableName, type);
+                        scope.addVariable(identifier, type);
                         scope.setValue(identifier, type, result.value, identifier);
                     }
                     parametersCounter++;
@@ -381,7 +467,12 @@ export class Engine
 
     evaluateExpression(expression)
     {
-        if (expression instanceof Equal) {
+        if (expression instanceof GetPointer) {
+            let indentifierBranch = expression.identifier;
+            let identifierBranchResult = this.evaluateIdentifierBranch(indentifierBranch);
+            let type = identifierBranchResult.getType();
+            return new PointerVariable(identifierBranchResult, type);
+        } else if (expression instanceof Equal) {
             let leftOperand = this.evaluateExpression(expression.left);
             let rightOperand = this.evaluateExpression(expression.right);
             let typeId = TypesIds.BOOLEAN;
@@ -571,50 +662,13 @@ export class Engine
     {
         if (expression instanceof Constant) {
             return new ScalarVariable(expression.symbol.value, expression.typeId);
-        } else if (expression instanceof Identifier) {
-            let currentScope = this.getCurrentScope();
-            return currentScope.getElementByIdentifier(expression);
-        } else if (expression instanceof IndexedIdentifier) {
-            let currentScope = this.getCurrentScope();
-            expression.indexRing = this.evaluateIndexRing(expression.indexRing);
-            return currentScope.getElementByIndexedIdentifier(expression);
-        } else if (expression instanceof FunctionCall) {
+        } else if (expression instanceof FunctionCall ||
+                expression instanceof Identifier ||
+                expression instanceof IndexedIdentifier ||
+                expression instanceof GetByPointer ||
+                expression instanceof TakeField) {
 
-            let functionName = expression.identifier.symbol.value;
-            let isDeclaredFunction = this.tree.functions.hasOwnProperty(functionName);
-            let calledFunction = isDeclaredFunction ?
-                this.tree.functions[functionName]:
-                this.functionsStore.getFunction(functionName);
-
-            if (calledFunction === null) {
-                this.addError(ErrorsCodes.nameNotDescribed, `Function '${functionName}' is not declared!`, expression.identifier);
-            }
-
-            let currentScope = this.getCurrentScope();
-            let scope = new Scope(currentScope);
-
-            scope.addVariable(functionName, calledFunction.returnType);
-            this.addParametersToScope(expression.parameters, calledFunction.signature, scope);
-            this.treesCounter++;
-            this.tree = calledFunction;
-            this.currentScopeId++;
-            this.scopes[this.currentScopeId] = scope;
-
-            this.run();
-
-            if (!isDeclaredFunction &&
-                typeof calledFunction.innerRun === 'function' ) {
-                calledFunction.innerRun(scope);
-            }
-
-            let result = scope.getVariable(functionName);
-            delete this.scopes[this.currentScopeId];
-
-            this.currentScopeId--;
-            this.treesCounter--;
-            this.tree = this.trees[this.treesCounter];
-
-            return result;
+            return this.evaluateIdentifierBranch(expression);
         } else {
             return this.evaluateExpression(expression);
         }

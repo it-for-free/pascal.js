@@ -9,4 +9,9 @@ export class ScalarVariable extends BaseVariable
         this.typeId = typeId;
         this.type = false;
     }
+
+    clone()
+    {
+        return new ScalarVariable(this.value, this.typeId);
+    }
 }

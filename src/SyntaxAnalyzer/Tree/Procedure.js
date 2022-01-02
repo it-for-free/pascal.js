@@ -2,9 +2,9 @@ import { ProgramBase } from './ProgramBase';
 
 export class Procedure extends ProgramBase
 {
-    constructor(symbol)
+    constructor(symbol, type = null)
     {
         super(symbol);
-        this.signature = [];
+        this.type = type;
     }
 };

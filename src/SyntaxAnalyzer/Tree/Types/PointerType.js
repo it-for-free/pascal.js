@@ -3,9 +3,14 @@ import { TypesIds } from '../../../Semantics/Variables/TypesIds';
 
 export class PointerType extends TypeBase
 {
-    constructor(symbol, mainType)
+    constructor(symbol, type)
     {
         super(symbol, TypesIds.POINTER);
-        this.mainType = mainType;
+        this.type = type;
+    }
+
+    toString()
+    {
+        return `^${this.type}`;
     }
 }

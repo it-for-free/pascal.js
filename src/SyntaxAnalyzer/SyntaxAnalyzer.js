@@ -4,10 +4,11 @@ import { SymbolsDescription } from '../LexicalAnalyzer/SymbolsDescription';
 import { Assignation } from './Tree/Assignation';
 import { TakeElemByKeys } from './Tree/TakeElemByKeys';
 import { IndexedIdentifier } from './Tree/Arrays/IndexedIdentifier';
-import { IndexedFunctionCall } from './Tree/Arrays/IndexedFunctionCall';
 import { IndexRing } from './Tree/Arrays/IndexRing';
 import { GetByPointer } from './Tree/GetByPointer';
+import { GetPointer } from './Tree/GetPointer';
 import { TakeField } from './Tree/TakeField';
+import { SetResult } from './Tree/SetResult';
 import { Multiplication } from './Tree/Multiplication';
 import { Division } from './Tree/Division';
 import { Addition } from './Tree/Addition';
@@ -17,6 +18,7 @@ import { Identifier } from './Tree/Identifier';
 import { FunctionCall } from './Tree/FunctionCall';
 import { ProcedureCall } from './Tree/ProcedureCall';
 import { ScalarType } from './Tree/Types/ScalarType';
+import { RecordType } from './Tree/Types/RecordType';
 import { AppliedNamedType } from './Tree/Types/AppliedNamedType';
 import { VariablesDeclaration } from './Tree/VariablesDeclaration';
 import { ConstantDeclaration } from './Tree/ConstantDeclaration';
@@ -45,6 +47,7 @@ import { TypeApplied } from './Tree/ParametersList/TypeApplied';
 import { TypesIds } from '../Semantics/Variables/TypesIds';
 import { EnumType } from './Tree/Types/EnumType';
 import { ArrayType } from './Tree/Types/ArrayType';
+import { PointerType } from './Tree/Types/PointerType';
 import { WhileCycle } from './Tree/Loops/WhileCycle';
 import { RepeatCycle } from './Tree/Loops/RepeatCycle';
 import { ForCycle } from './Tree/Loops/ForCycle';
@@ -236,7 +239,12 @@ export class SyntaxAnalyzer
     scanType()
     {
         let typeSymbol = null;
-        if (this.symbol.symbolCode === SymbolsCodes.integerSy ||
+        if (this.symbol.symbolCode === SymbolsCodes.arrow) {
+            typeSymbol = this.symbol;
+            this.nextSym();
+            let targetType = this.scanType();
+            return new PointerType(typeSymbol, targetType);
+        } else if (this.symbol.symbolCode === SymbolsCodes.integerSy ||
             this.symbol.symbolCode === SymbolsCodes.booleanSy ||
             this.symbol.symbolCode === SymbolsCodes.realSy ||
             this.symbol.symbolCode === SymbolsCodes.stringSy ||
@@ -297,6 +305,49 @@ export class SyntaxAnalyzer
             this.nextSym();
             procedureType.signature = this.scanParametersList();
             return procedureType;
+        } else if (this.symbol.symbolCode === SymbolsCodes.recordSy) {
+            let recordSymbol = this.symbol;
+            this.nextSym();
+
+            let recordElems = [];
+
+            do {
+                if (recordElems.length > 0) {
+                    if (this.symbol.symbolCode === SymbolsCodes.semicolon ) {
+                        this.nextSym();
+                    }
+                    if (this.symbol.symbolCode === SymbolsCodes.endSy) {
+                        break;
+                    }
+                }
+
+                let parameters = new TypeApplied(this.symbol);
+
+                let identifiers = [];
+
+                do {
+                    if (identifiers.length > 0 &&
+                        this.symbol.symbolCode === SymbolsCodes.comma) {
+                        this.nextSym();
+                    }
+
+                    identifiers.push(new Identifier(this.symbol));
+                    this.accept(SymbolsCodes.ident);
+
+                } while (this.symbol.symbolCode === SymbolsCodes.comma)
+
+                this.accept(SymbolsCodes.colon);
+                parameters.identifiers = identifiers;
+                parameters.type = this.scanType();
+
+                recordElems.push(parameters);
+
+            } while (this.symbol.symbolCode === SymbolsCodes.semicolon)
+
+            this.accept(SymbolsCodes.endSy);
+
+            return new RecordType(recordSymbol, recordElems);
+
         }
     }
 
@@ -318,13 +369,16 @@ export class SyntaxAnalyzer
     {
         let procedureSymbol = this.symbol;
         this.accept(SymbolsCodes.procedureSy);
+        let identifier = new Identifier(this.symbol);
+        this.accept(SymbolsCodes.ident);
+        let procedureType = new ProcedureType(procedureSymbol);
+        procedureType.signature = this.scanParametersList();
 
         this.treesCounter++;
-        this.tree = new Procedure(procedureSymbol);
+        this.tree = new Procedure(procedureSymbol, procedureType);
         this.trees[this.treesCounter] = this.tree;
-        this.tree.name = new Identifier(this.symbol);
-        let procedureName = this.tree.name.symbol.value;
-        this.accept(SymbolsCodes.ident);
+        this.tree.name = identifier;
+        let procedureName = this.tree.name.symbol.value.toLowerCase();
         this.tree.signature = this.scanParametersList();
         this.accept(SymbolsCodes.semicolon);
 
@@ -341,16 +395,18 @@ export class SyntaxAnalyzer
     {
         let functionSymbol = this.symbol;
         this.accept(SymbolsCodes.functionSy);
-        this.treesCounter++;
-        this.tree = new Function(functionSymbol);
-        this.trees[this.treesCounter] = this.tree;
-        this.tree.name = new Identifier(this.symbol);
-        let functionName = this.tree.name.symbol.value;
+        let identifier = new Identifier(this.symbol);
         this.accept(SymbolsCodes.ident);
-        this.tree.signature = this.scanParametersList();
+        let functionType = new FunctionType(functionSymbol);
+        functionType.signature = this.scanParametersList();
         this.accept(SymbolsCodes.colon);
-        this.tree.returnType = this.scanType();
+        functionType.returnType = this.scanType();
 
+        this.treesCounter++;
+        this.tree = new Function(functionSymbol, functionType);
+        this.trees[this.treesCounter] = this.tree;
+        this.tree.name = identifier;
+        let functionName = this.tree.name.symbol.value.toLowerCase();
         this.accept(SymbolsCodes.semicolon);
         this.scanBlock();
         this.accept(SymbolsCodes.semicolon);
@@ -406,9 +462,8 @@ export class SyntaxAnalyzer
                     parametersList.push(parameters);
 
                 } while (this.symbol.symbolCode === SymbolsCodes.semicolon)
-
-                this.accept(SymbolsCodes.rightPar);
             }
+            this.accept(SymbolsCodes.rightPar);
         }
 
         return parametersList;
@@ -444,19 +499,14 @@ export class SyntaxAnalyzer
     {
         // Имя переменной, функции или процедуры
         if (this.symbol.symbolCode === SymbolsCodes.ident) {
-            let ident = this.symbol;
-            this.nextSym();
-            // Имя процедуры
-            if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
-                this.nextSym();
-                let parameters = this.scanParameters();
-                return new ProcedureCall(ident, new Identifier(ident), parameters);
-            // Имя переменной или функции
-            } else {
-                let variable = this.scanVariable(ident);
+            let identifierBranch = this.scanIdentifierBranch();
+
+            if (this.symbol.symbolCode === SymbolsCodes.assign) {
                 let assignSymbol = this.symbol;
-                this.accept(SymbolsCodes.assign);
-                return new Assignation(assignSymbol, variable, this.scanExpression());
+                this.nextSym();
+                return new Assignation(assignSymbol, identifierBranch, this.scanExpression());
+            } else {
+                return identifierBranch;
             }
         } else if (this.symbol.symbolCode === SymbolsCodes.beginSy) {
             return this.scanCompoundOperator();
@@ -535,6 +585,12 @@ export class SyntaxAnalyzer
             let breakSymbol = this.symbol;
             this.nextSym();
             return new Break(breakSymbol);
+        } else if (this.symbol.symbolCode === SymbolsCodes.resultSy) {
+            let resultSymbol = this.symbol;
+            this.nextSym();
+            this.accept(SymbolsCodes.assign);
+            let expression = this.scanExpression();
+            return new SetResult(resultSymbol, expression);
         }
     }
 
@@ -591,42 +647,57 @@ export class SyntaxAnalyzer
     }
 
     /** Синтаксическая диаграмма "переменная" */
-    scanVariable(ident)
+    scanIdentifierBranch(inputExpression = null)
     {
+        let baseExpression = null;
+        if (inputExpression === null) {
+            let ident = this.symbol;
+            this.nextSym();
+            baseExpression = new Identifier(ident);
+        } else {
+            baseExpression = inputExpression;
+        }
+
         switch(this.symbol.symbolCode) {
+            case SymbolsCodes.leftPar:
+                    let leftParSymbol = this.symbol;
+                    this.nextSym();
+                    let parameters = this.scanParameters();
+                    return this.scanIdentifierBranch(new FunctionCall(leftParSymbol, baseExpression, parameters));
             case SymbolsCodes.lBracket:
                 let lBracket = this.symbol;
-                let identifier = new Identifier(ident);
-                return new IndexedIdentifier(lBracket, identifier, this.scanIndices());
-
+                return this.scanIdentifierBranch(new IndexedIdentifier(lBracket, baseExpression, this.scanIndices()));
             case SymbolsCodes.point:
-                let point = null;
-                let field = ident;
-                let subField = null;
+                let point = this.symbol;
+                this.nextSym();
+                let subField = new Identifier(this.symbol);
+                this.accept(SymbolsCodes.ident);
 
-                do {
-                    point = this.symbol;
-                    this.accept(SymbolsCodes.ident);
-                    subField = this.symbol;
-                    this.nextSym();
-                    field = new TakeField(point, field, subField);
-
-                } while (this.symbol.symbolCode === SymbolsCodes.point)
-                return field;
+                return this.scanIdentifierBranch(new TakeField(point, baseExpression, subField));
 
             case SymbolsCodes.arrow:
                 let arrow = this.symbol;
                 this.nextSym();
-                return new GetByPointer(arrow, ident);
-
+                return this.scanIdentifierBranch(new GetByPointer(arrow, baseExpression));
             default:
-                return new Identifier(ident);
+                return baseExpression;
         }
     }
 
     /** Синтаксическая диаграмма "выражение" */
     scanExpression()
     {
+        if (this.symbol.symbolCode === SymbolsCodes.at) {
+            let atSymbol = this.symbol;
+            this.nextSym();
+            let identSymbol = this.symbol;
+            this.accept(SymbolsCodes.ident);
+            let identifier = new Identifier(identSymbol);
+            let identifierBranch = this.scanIdentifierBranch(identifier);
+
+            return new GetPointer(atSymbol, identifierBranch);
+        }
+
         let simpleExpression = this.scanSimpleExpression();
 
         switch (this.symbol.symbolCode) {
@@ -751,31 +822,7 @@ export class SyntaxAnalyzer
     scanMultiplier()
     {
         if (this.symbol.symbolCode === SymbolsCodes.ident) {
-            let ident = this.symbol;
-            this.nextSym();
-            let variable = this.scanVariable(ident);
-            // имя функции или переменной
-            if (variable instanceof Identifier) {
-
-                if (this.symbol.symbolCode === SymbolsCodes.leftPar) {
-                    let leftParSymbol = this.symbol;
-                    this.nextSym();
-                    let parameters = this.scanParameters();
-
-                    let functionCall = new FunctionCall(leftParSymbol, variable, parameters);
-
-                    if (this.symbol.symbolCode === SymbolsCodes.lBracket) {
-                        let lBracket = this.symbol;
-                        return new IndexedFunctionCall(lBracket, functionCall, this.scanIndices());
-                    } else {
-                        return functionCall;
-                    }
-                } else {
-                    return variable;
-                }
-            } else if (variable instanceof IndexedIdentifier) {
-                return variable;
-            }
+            return this.scanIdentifierBranch();
         } else if ( this.symbol.symbolCode === SymbolsCodes.floatC ||
                     this.symbol.symbolCode === SymbolsCodes.intC ||
                     this.symbol.symbolCode === SymbolsCodes.stringC ||
@@ -805,8 +852,9 @@ export class SyntaxAnalyzer
 
             } while (this.symbol.symbolCode === SymbolsCodes.comma)
 
-            this.accept(SymbolsCodes.rightPar);
         }
+
+        this.accept(SymbolsCodes.rightPar);
 
         return parameters;
     }

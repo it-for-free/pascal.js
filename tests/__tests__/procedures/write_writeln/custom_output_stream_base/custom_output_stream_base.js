@@ -8,7 +8,7 @@ class MyOutputStream {
   }
 
   write(str) {
-    this.value += str; 
+    this.value += str;
   }
 }
 

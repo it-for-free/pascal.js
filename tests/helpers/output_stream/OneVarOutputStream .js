@@ -4,16 +4,16 @@ export class OneVarOutputStream {
     constructor() {
       this.value = '';
     }
-  
+
     write(str) {
-      this.value += str; 
+      this.value += str;
     }
   }
 
 export const TESTING_NEW_LINE_SYMBOL = '!!!'; // or as usual \n
-  
+
 export const getOneVarOutputStreamConfig = () =>  {
-  
+
   return {
     ...defaultConfig,
     outputStream: new OneVarOutputStream(),

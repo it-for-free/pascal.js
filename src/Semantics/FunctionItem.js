@@ -1,4 +1,3 @@
-import { Scope } from './Scope';
 import { ProcedureItem } from './ProcedureItem';
 
 export class FunctionItem extends ProcedureItem
@@ -6,6 +5,6 @@ export class FunctionItem extends ProcedureItem
     constructor()
     {
         super();
-        this.type = null;
+        this.returnType = null;
     }
 };
