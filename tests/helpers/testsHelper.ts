@@ -1,13 +1,18 @@
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import util from 'util';
-import { FileIO, ConsoleOutput, LexicalAnalyzer, 
-    SyntaxAnalyzer, Engine,  PascalJs   } from '../../src/pascal.js';
+import {  PascalJs   } from '../../src/pascal';
 import { config as defaultConfig } from '../../src/PascalJs/demoConfig';    
+import { StringOutput } from 'src/IO/Output/StringOutput';
+import fs from 'fs';
 
 export function getFullPath(ImportMetaUrlData, fileName) {
     const __filename = fileURLToPath(ImportMetaUrlData);
     return dirname(__filename) + '/' + fileName;
+}
+
+export function getFileContent(ImportMetaUrlData, fileName) {
+    return fs.readFileSync(getFullPath(ImportMetaUrlData, fileName), 'utf-8');
 }
 
 /**
@@ -36,7 +41,25 @@ export function runFile(ImportMetaUrlData, fileName, ignoreInnerError = false, c
     let PJS = new PascalJs(config);
     PJS.runFile(getFullPath(ImportMetaUrlData, fileName));
 
-    if (!ignoreInnerError  && PJS.error) {
+    if (!ignoreInnerError && PJS.error) {
+        throw PJS.error;
+    }
+    return PJS;
+}
+
+export function runString(programText: string, ignoreInnerError = false, config = null) {
+
+    if (!config) {
+        config = { 
+            ...defaultConfig,
+            listingOutput: new StringOutput(),
+        };
+    }
+    
+    let PJS = new PascalJs(config);
+    PJS.runString(programText);
+
+    if (!ignoreInnerError && PJS.error) {
         throw PJS.error;
     }
     return PJS;

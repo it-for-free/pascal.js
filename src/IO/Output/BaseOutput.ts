@@ -1,15 +1,10 @@
-export class ConsoleOutput
-{
-    constructor()
-    {
-        this.errorsCounter = 0;
-    }
+import {ListingOutput} from './types';
+import {getNumberOfDigits} from '../helpers';
 
-    listLine(line, number)
-    {
-        var output = this.getLinePrefix(number + 1) + line;
-        console.log(output.replace(/[\n\r]/g, ''));
-    }
+export abstract class BaseOutput
+{
+    errorsCounter: number = 0;
+
 
     listErrors(errors)
     {
@@ -24,8 +19,8 @@ export class ConsoleOutput
     getErrorText(error, errorNumber)
     {
         var lineNumber = error.textPosition.lineNumber;
-        var lineNumberDigits = this.getNumberOfDigits(lineNumber);
-        var errorNumberDigits = this.getNumberOfDigits(errorNumber);
+        var lineNumberDigits = getNumberOfDigits(lineNumber);
+        var errorNumberDigits = getNumberOfDigits(errorNumber);
         var difference = lineNumberDigits - errorNumberDigits;
         
         var zeroesNumber = difference > 0 ? difference : 0;
@@ -36,14 +31,9 @@ export class ConsoleOutput
                 ' '.repeat(error.textPosition.charNumber + 1) + '^ Error Code ' + error.errorCode + '\n' +
                 '*'.repeat(starsNumber) + '  ' + error.errorText;
     }
-
+    
     listError(error)
     {
         console.log(this.getErrorText(error, ++this.errorsCounter));
-    }
-
-    getNumberOfDigits(number)
-    {
-        return (number < 10 ? 1 : Math.floor(Math.log10(number))) + 1;
     }
 }

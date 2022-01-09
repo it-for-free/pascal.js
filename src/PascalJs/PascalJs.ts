@@ -1,24 +1,20 @@
 
 import { FileIO } from '../IO/FileIO';
-import { ConsoleOutput } from '../IO/ConsoleOutput';
 import { LexicalAnalyzer } from '../LexicalAnalyzer/LexicalAnalyzer';
 import { SyntaxAnalyzer } from '../SyntaxAnalyzer/SyntaxAnalyzer';
 import { Engine } from '../Semantics/Engine';
 import { RuntimeError } from '../Errors/RuntimeError';
-import { config } from './demoConfig';
 import { TypesIds } from '../Semantics/Variables/TypesIds';
 import { PascalJsConfig } from './types';
+import { StringIO } from '../IO/StringIO';
 
 export class PascalJs {
-    /**
-     * @type Engine  
-     */
-    engine;
 
+    engine: Engine;
     error: RuntimeError;
     config: PascalJsConfig;
 
-    constructor(config) {
+    constructor(config: PascalJsConfig) {
         this.config = config;
     }
 
@@ -26,7 +22,30 @@ export class PascalJs {
 
         try {
             var fileIO = new FileIO(filePath,
-                new ConsoleOutput()
+                this.config.listingOutput
+            );
+            var lexicalAnalyzer = new LexicalAnalyzer(fileIO);
+            var syntaxAnalyzer = new SyntaxAnalyzer(lexicalAnalyzer);
+            var tree = syntaxAnalyzer.analyze();
+            var engine = new Engine(tree, this.config);
+            engine.run();
+        } catch (e) {
+
+            if (e instanceof RuntimeError) {
+                this.error = e;
+            } else throw e;
+        }
+
+
+        this.engine = engine;
+        return engine;
+    }
+
+    runString(programText: string) {
+
+        try {
+            var fileIO = new StringIO(programText,
+                this.config.listingOutput
             );
             var lexicalAnalyzer = new LexicalAnalyzer(fileIO);
             var syntaxAnalyzer = new SyntaxAnalyzer(lexicalAnalyzer);

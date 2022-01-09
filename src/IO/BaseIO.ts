@@ -1,23 +1,29 @@
 import { TextPosition } from './TextPosition';
 import { ErrorsDescription } from '../Errors/ErrorsDescription';
 import { RuntimeError } from '../Errors/RuntimeError';
-import fs from 'fs'
+import {IO} from './types';
+import {ListingOutput} from './Output/types';
 
-export class FileIO
+
+export class BaseIO implements IO
 {
-    constructor(fileName, printer)
-    {
-        this.errorsDescription = new ErrorsDescription();
+    positionNow = new TextPosition();
+    printer: ListingOutput;
+    currentLine: string[];
+    currentLineErrors: RuntimeError[] = [];
+    lines: string[];
+    linePointer: number= 0;
+    endOfFile: boolean = false;  
+    errorsDescription = new ErrorsDescription();
 
-        this.positionNow = new TextPosition();
+    
+    constructor(printer: ListingOutput)
+    {
         this.printer = printer;
-        this.currentLine;
-        this.currentLineErrors = [];
-        var data = fs.readFileSync(fileName, 'UTF-8');
-        this.lines = data.split(/\r?\n/);
-        this.linePointer = 0;
-        this.currentLine;
-        this.endOfFile = false;
+    }
+
+    setLines(programText: string) {
+        this.lines = programText.split(/\r?\n/);
         this.readNextLine();
     }
 
@@ -35,7 +41,6 @@ export class FileIO
             return null;
         } else {
             if (this.positionNow.charNumber === this.currentLine.length) {
-//                this.printer.listLine(this.currentLine.join(''), this.positionNow.lineNumber);
                 if (this.currentLineErrors.length > 0) {
                     this.printer.listErrors(this.currentLineErrors);
                 }

@@ -1,5 +1,5 @@
 import { FileIO } from './src/IO/FileIO';
-import { ConsoleOutput } from './src/IO/ConsoleOutput';
+import { ConsoleOutput } from './src/IO/Output/ConsoleOutput';
 import { LexicalAnalyzer } from './src/LexicalAnalyzer/LexicalAnalyzer';
 import { SyntaxAnalyzer } from './src/SyntaxAnalyzer/SyntaxAnalyzer';
 import { Engine } from './src/Semantics/Engine';
