@@ -586,11 +586,24 @@ export class SyntaxAnalyzer
             this.nextSym();
             return new Break(breakSymbol);
         } else if (this.symbol.symbolCode === SymbolsCodes.resultSy) {
-            let resultSymbol = this.symbol;
-            this.nextSym();
-            this.accept(SymbolsCodes.assign);
-            let expression = this.scanExpression();
-            return new SetResult(resultSymbol, expression);
+            if (this.tree.type instanceof FunctionType) {
+
+                let ident = this.tree.name.symbol;
+                this.nextSym();
+                let identifierBranch = new Identifier(ident); //создаем объект идент
+
+                if (this.symbol.symbolCode === SymbolsCodes.assign) { //если присвоение
+                        let assignSymbol = this.symbol;
+                    this.nextSym();
+                    return new Assignation(assignSymbol, identifierBranch, this.scanExpression());
+                }else {
+                    let errorText = `the assignment operator is missing ":=" after the "result" variable.`;
+                    this.addError(ErrorsCodes.inadmissibleSymbol, errorText, this.symbol);
+                }
+            }else{
+                let errorText = `it is unacceptable to use the "result" variable outside the function.`;
+                this.addError(ErrorsCodes.inadmissibleSymbol, errorText, this.symbol);
+            }
         }
     }
 
