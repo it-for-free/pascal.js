@@ -114,7 +114,10 @@ export class Engine
                         {
                             if (identifier instanceof Identifier) {
                                 currentScope.addVariable(identifier, variablesDeclaration.variablesType, null, identifier);
-
+                                let initialValue = variablesDeclaration.initialValue;
+                                if (initialValue instanceof Constant) {
+                                    currentScope.setValue(identifier, initialValue.typeId, initialValue.symbol.value, initialValue);
+                                }
                             } else {
                                 throw 'Identifier must be here!';
                             }

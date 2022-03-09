@@ -212,7 +212,13 @@ export class SyntaxAnalyzer
         this.accept(SymbolsCodes.colon);
         let type = this.scanType();
 
-        return new VariablesDeclaration(colon, identifiers, type);
+        let initialValue = null;
+        if (this.symbol.symbolCode === SymbolsCodes.equal) {
+            this.nextSym();
+            initialValue = this.scanConstant();
+        }
+
+        return new VariablesDeclaration(colon, identifiers, type, initialValue);
     }
 
     scanListArrayType(typeSymbol)
