@@ -67,6 +67,7 @@ export class SyntaxAnalyzer
         this.trees = [];
         this.treesCounter = 0;
         this.errorDetected = false;
+        this.ResultFlag = false;
     }
 
     nextSym()
@@ -186,7 +187,26 @@ export class SyntaxAnalyzer
                 this.accept(SymbolsCodes.semicolon);
             } while (!this.errorDetected &&
                 this.symbol.symbolCode === SymbolsCodes.ident)
-        }
+
+            if (this.tree instanceof Function &&
+                !this.ResultFlag) {
+                    this.addResult();
+            }
+        } else if (this.tree instanceof Function) {
+            this.addResult();
+        }      
+    }
+
+    addResult()
+    {
+        let typeId = this.tree.type.returnType.typeId;
+        let typeSymbol = this.tree.type.returnType.symbol;
+        let type = new ScalarType(typeSymbol, typeId) 
+        let identifier = [];
+        identifier.push(new Identifier(new Symbol(0, 2, "result")));
+        let colon = new Symbol(0, 5, ":");
+        this.tree.vars.push(new VariablesDeclaration(colon, identifier, type));
+        this.ResultFlag = false;
     }
 
     scanVarDeclaration()
@@ -211,6 +231,12 @@ export class SyntaxAnalyzer
         let colon = this.symbol;
         this.accept(SymbolsCodes.colon);
         let type = this.scanType();
+
+        if (this.tree instanceof Function &&
+            type.typeId == this.tree.type.returnType.typeId) { 
+            identifiers.push(new Identifier(new Symbol(0, 141, "result")));
+            this.ResultFlag = true;
+        }
 
         return new VariablesDeclaration(colon, identifiers, type);
     }
@@ -581,30 +607,11 @@ export class SyntaxAnalyzer
             let body = this.scanSentence();
 
             return new ForCycle(forSymbol, variable, initExpression, lastExpression, countDown, body);
-        } else if (this.symbol.symbolCode === SymbolsCodes.breakSy) {
-            let breakSymbol = this.symbol;
-            this.nextSym();
-            return new Break(breakSymbol);
-        } else if (this.symbol.symbolCode === SymbolsCodes.resultSy) {
-            if (this.tree.type instanceof FunctionType) {
-
-                let ident = this.tree.name.symbol;
-                this.nextSym();
-                let identifierBranch = new Identifier(ident); //создаем объект идент
-
-                if (this.symbol.symbolCode === SymbolsCodes.assign) { //если присвоение
-                        let assignSymbol = this.symbol;
-                    this.nextSym();
-                    return new Assignation(assignSymbol, identifierBranch, this.scanExpression());
-                }else {
-                    let errorText = `the assignment operator is missing ":=" after the "result" variable.`;
-                    this.addError(ErrorsCodes.inadmissibleSymbol, errorText, this.symbol);
-                }
-            }else{
-                let errorText = `it is unacceptable to use the "result" variable outside the function.`;
-                this.addError(ErrorsCodes.inadmissibleSymbol, errorText, this.symbol);
-            }
-        }
+        }  else if (this.symbol.symbolCode === SymbolsCodes.breakSy) {
+             let breakSymbol = this.symbol;
+             this.nextSym();
+             return new Break(breakSymbol);
+        } 
     }
 
     scanCompoundOperator()

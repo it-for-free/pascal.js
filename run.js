@@ -20,7 +20,7 @@ var symbol = null;
 var syntaxAnalyzer = new SyntaxAnalyzer(lexicalAnalyzer);
 //try {
     var tree = syntaxAnalyzer.analyze();
-//    console.dir(tree, { depth: null });
+//  console.dir(tree, { depth: null });
 
     var engine = new Engine(tree, config);
     engine.run();

@@ -43,7 +43,7 @@ export class KeyWords
             ['packed', SymbolsCodes.packedSy],
             ['record', SymbolsCodes.recordSy],
             ['repeat', SymbolsCodes.repeatSy],
-            ['result', SymbolsCodes.resultSy],
+            //['result', SymbolsCodes.resultSy],
             ['program', SymbolsCodes.programSy],
             ['integer', SymbolsCodes.integerSy],
             ['boolean', SymbolsCodes.booleanSy],
