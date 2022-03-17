@@ -67,7 +67,6 @@ export class SyntaxAnalyzer
         this.trees = [];
         this.treesCounter = 0;
         this.errorDetected = false;
-        this.ResultFlag = false;
     }
 
     nextSym()
@@ -186,29 +185,9 @@ export class SyntaxAnalyzer
                 this.tree.vars.push(this.scanVarDeclaration());
                 this.accept(SymbolsCodes.semicolon);
             } while (!this.errorDetected &&
-                this.symbol.symbolCode === SymbolsCodes.ident)
-
-            if (this.tree instanceof Function &&
-                !this.ResultFlag) {
-                    this.addResult();
-            }
-        } else if (this.tree instanceof Function) {
-            this.addResult();
-        }      
+                this.symbol.symbolCode === SymbolsCodes.ident)      
     }
-
-    addResult()
-    {
-        let typeId = this.tree.type.returnType.typeId;
-        let typeSymbol = this.tree.type.returnType.symbol;
-        let type = new ScalarType(typeSymbol, typeId) 
-        let identifier = [];
-        identifier.push(new Identifier(new Symbol(0, 2, "result")));
-        let colon = new Symbol(0, 5, ":");
-        this.tree.vars.push(new VariablesDeclaration(colon, identifier, type));
-        this.ResultFlag = false;
-    }
-
+}
     scanVarDeclaration()
     {
         let identifiers = [];
@@ -231,12 +210,6 @@ export class SyntaxAnalyzer
         let colon = this.symbol;
         this.accept(SymbolsCodes.colon);
         let type = this.scanType();
-
-        if (this.tree instanceof Function &&
-            type.typeId == this.tree.type.returnType.typeId) { 
-            identifiers.push(new Identifier(new Symbol(0, 141, "result")));
-            this.ResultFlag = true;
-        }
 
         return new VariablesDeclaration(colon, identifiers, type);
     }
@@ -523,7 +496,6 @@ export class SyntaxAnalyzer
     /** Синтаксическая диаграмма "оператор" */
     scanSentence()
     {
-        // Имя переменной, функции или процедуры
         if (this.symbol.symbolCode === SymbolsCodes.ident) {
             let identifierBranch = this.scanIdentifierBranch();
 

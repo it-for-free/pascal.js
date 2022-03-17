@@ -40,7 +40,7 @@ export class Scope
         this.callableName = null;
     }
 
-    addVariable(identifier, type, value = null, treeNode = null)
+    addVariable(identifier, type, value = null, treeNode = null, result = null)
     {
         let name = identifier.symbol.value;
         let lowerCaseName = name.toLowerCase();
@@ -49,7 +49,11 @@ export class Scope
         } else if (this.items.hasOwnProperty(lowerCaseName)) {
             this.addError(ErrorsCodes.identifierAlreadyUsed, `Variable '${lowerCaseName}' already declared.`, treeNode === null ? type : treeNode);
         } else {
+            if (result) {
+                this.items[result.toLowerCase()] = this.createVariable(type, value); 
+            } else {
             this.items[lowerCaseName] = this.createVariable(type, value);
+            }
         }
     }
 
