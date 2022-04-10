@@ -73,6 +73,5 @@ export const SymbolsCodes = {
     procedureSy     :137,
     breakSy         :138,
     trueSy          :139,
-    falseSy         :140,
-    resultSy        :141,
+    falseSy         :140
 };

@@ -13,7 +13,6 @@ import { ArrayType } from '../SyntaxAnalyzer/Tree/Types/ArrayType';
 import { Identifier } from '../SyntaxAnalyzer/Tree/Identifier';
 import { Function } from '../SyntaxAnalyzer/Tree/Function';
 import { Procedure } from '../SyntaxAnalyzer/Tree/Procedure';
-import { SetResult } from '../SyntaxAnalyzer/Tree/SetResult';
 import { Assignation } from '../SyntaxAnalyzer/Tree/Assignation';
 import { SymbolsCodes } from '../LexicalAnalyzer/SymbolsCodes';
 import { Constant } from '../SyntaxAnalyzer/Tree/Constant';
@@ -59,6 +58,8 @@ import { ArrayVariable } from '../Semantics/Variables/ArrayVariable';
 import { GetByPointer } from '../SyntaxAnalyzer/Tree/GetByPointer';
 import { GetPointer } from '../SyntaxAnalyzer/Tree/GetPointer';
 import { PointerVariable } from './Variables/PointerVariable';
+import { Switch } from '../SyntaxAnalyzer/Tree/Case/Switch';
+import { Case } from '../SyntaxAnalyzer/Tree/Case/Case';
 
 export class Engine
 {
@@ -431,10 +432,32 @@ export class Engine
             } else {
                 return sentence;
             }
-        } else if (sentence instanceof SetResult) {
+        } else if (sentence instanceof Switch) {
+            let switchValue = this.evaluateExpression(sentence.switchExpression);
+            let caseFound = false;
             let currentScope = this.getCurrentScope();
-            let result = this.evaluateExpression(sentence.expression);
-            currentScope.setValue(this.tree.name, result.getType(), result);
+
+            for (let i = 0; i <  sentence.cases.length; i++) {
+                let caseItem = sentence.cases[i];
+                for(let j = 0; j < caseItem.constants.length; j++) {
+                    let constant = caseItem.constants[j];
+                    if (!currentScope.sameType(constant.typeId, switchValue.getType())) {
+                        this.addError(ErrorsCodes.typesMismatch, 'The constant and the switch expression have different types', constant);
+                    }
+                    if (constant.symbol.value === switchValue.value) {
+                        caseFound = true;
+                        this.evaluateSentence(caseItem.operator);
+                        break;
+                    }
+                }
+                if (caseFound) {
+                    break;
+                }
+            }
+
+            if (!caseFound && sentence.elseSentence !== null) {
+                this.evaluateSentence(sentence.elseSentence);
+            }
         }
     }
 

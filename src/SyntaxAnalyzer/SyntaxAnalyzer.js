@@ -8,7 +8,6 @@ import { IndexRing } from './Tree/Arrays/IndexRing';
 import { GetByPointer } from './Tree/GetByPointer';
 import { GetPointer } from './Tree/GetPointer';
 import { TakeField } from './Tree/TakeField';
-import { SetResult } from './Tree/SetResult';
 import { Multiplication } from './Tree/Multiplication';
 import { Division } from './Tree/Division';
 import { Addition } from './Tree/Addition';
@@ -50,6 +49,8 @@ import { ArrayType } from './Tree/Types/ArrayType';
 import { PointerType } from './Tree/Types/PointerType';
 import { WhileCycle } from './Tree/Loops/WhileCycle';
 import { RepeatCycle } from './Tree/Loops/RepeatCycle';
+import { Switch } from './Tree/Case/Switch';
+import { Case } from './Tree/Case/Case';
 import { ForCycle } from './Tree/Loops/ForCycle';
 import { NmbInt } from './../LexicalAnalyzer/Symbols/NmbInt';
 import { Symbol } from './../LexicalAnalyzer/Symbols/Symbol';
@@ -591,12 +592,46 @@ export class SyntaxAnalyzer
             let breakSymbol = this.symbol;
             this.nextSym();
             return new Break(breakSymbol);
-        } else if (this.symbol.symbolCode === SymbolsCodes.resultSy) {
-            let resultSymbol = this.symbol;
+        } else if (this.symbol.symbolCode === SymbolsCodes.caseSy) {
+            let caseSymbol = this.symbol;
             this.nextSym();
-            this.accept(SymbolsCodes.assign);
-            let expression = this.scanExpression();
-            return new SetResult(resultSymbol, expression);
+            let switchExpression = this.scanExpression();
+            this.accept(SymbolsCodes.ofSy);
+
+            let switchItem = new Switch(caseSymbol, switchExpression);
+
+            do {
+                let caseItem = new Case(this.symbol);
+                let commaFollows = null;
+                do {
+                    caseItem.constants.push(this.scanConstant());
+                    commaFollows = this.symbol.symbolCode === SymbolsCodes.comma;
+                    if (commaFollows) {
+                        this.nextSym();
+                    }
+                } while (commaFollows);
+                this.accept(SymbolsCodes.colon);
+                caseItem.operator = this.scanSentence();
+                switchItem.cases.push(caseItem);
+                if(this.symbol.symbolCode !== SymbolsCodes.endSy &&
+                    this.symbol.symbolCode !== SymbolsCodes.elseSy) {
+                    this.accept(SymbolsCodes.semicolon);
+                } else if(this.symbol.symbolCode === SymbolsCodes.semicolon) {
+                    this.nextSym();
+                }
+            } while (this.symbol.symbolCode !== SymbolsCodes.endSy &&
+                    this.symbol.symbolCode !== SymbolsCodes.elseSy);
+
+            if (this.symbol.symbolCode === SymbolsCodes.elseSy) {
+                this.nextSym();
+                switchItem.elseSentence = this.scanSentence();
+                if(this.symbol.symbolCode === SymbolsCodes.semicolon) {
+                    this.accept(SymbolsCodes.semicolon);
+                }
+            }
+
+            this.accept(SymbolsCodes.endSy);
+            return switchItem;
         }
     }
 
