@@ -214,7 +214,7 @@ export class Engine
             let isDeclaredProcedure = null;
             let isDeclaredFunction = null;
 
-            let returnedElem = this.evaluateIdentifierBranch(identifierBranchExpression.identifierBranch); 
+            let returnedElem = this.evaluateIdentifierBranch(identifierBranchExpression.identifierBranch);
             let calledElem = returnedElem instanceof CallableVariable ?
                         returnedElem.value :
                         returnedElem;
@@ -224,13 +224,21 @@ export class Engine
             let procedureName = null;
             let res = null;
             if (calledElem instanceof FunctionItem ||
-                calledElem instanceof Function) {
-            let procedureIdentifier = calledElem.name;
-            procedureName = procedureIdentifier.symbol.value.toLowerCase();
+                    calledElem instanceof Function) {
+                let procedureIdentifier = calledElem.name;
+                procedureName = procedureIdentifier.symbol.value.toLowerCase();
 
-            scope.addVariable(procedureIdentifier, calledElem.type.returnType);
-            scope.callableName = calledElem.name.symbol.value;
-        }
+                calledElem.sentences.forEach(function(elem) {
+                    if (elem instanceof Assignation){
+                        if (elem.destination.symbol.value == 'result') {
+                            res = 'result';
+                        }
+                    }
+                });
+
+                scope.addVariable(procedureIdentifier, calledElem.type.returnType, null, null, res);
+                scope.callableName = calledElem.name.symbol.value;
+            }
 
             this.addParametersToScope(identifierBranchExpression.parameters, calledElem.type.signature, scope);
 
@@ -241,7 +249,7 @@ export class Engine
             this.currentScopeId++;
             this.scopes[this.currentScopeId] = scope;
 
-            this.run(); 
+            this.run();
 
             if (typeof calledElem.innerRun === 'function' ) {
                 calledElem.innerRun(scope);
@@ -253,15 +261,15 @@ export class Engine
                     if (res){
                         result = scope.getVariable(res);
                     } else {       
-                        result = scope.getVariable(procedureName); //?
+                        result = scope.getVariable(procedureName);
                     }
-            } 
+            }
             delete this.scopes[this.currentScopeId];
 
             this.currentScopeId--;
             this.treesCounter--;
             this.tree = this.trees[this.treesCounter];
-            return result; 
+            return result;
         } else if (identifierBranchExpression instanceof GetByPointer) {
             let pointerVariable = this.evaluateIdentifierBranch(identifierBranchExpression.pointer);
             return pointerVariable.variable;
@@ -278,10 +286,7 @@ export class Engine
 
         if (sentence instanceof Assignation) {
             let destination = sentence.destination;
-            if (destination.symbol.value == 'result') {
-                this.scopes[this.currentScopeId].addVariable(destination, this.tree.type.returnType);
-            }
-            let sourceExpression = sentence.sourceExpression; 
+            let sourceExpression = sentence.sourceExpression;
             let expressionResult = this.evaluateExpression(sourceExpression);
             let type = expressionResult.getType();
 
