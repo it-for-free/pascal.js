@@ -1,8 +1,8 @@
 import { runFile } from 'tests/helpers/testsHelper';
 import { expect, test } from '@jest/globals';
-let pjs = runFile(import.meta.url, 'result1.pas');
+let pjs = runFile(import.meta.url, 'result.pas');
 // insp(engine.scopes);
 
-test('result 1', () => {
-  expect(pjs.getVarValue('c')).toBe(555); 
+test('result for c', () => {
+  expect(pjs.getVarValue('c')).toBe(90); 
 });

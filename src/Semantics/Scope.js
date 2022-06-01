@@ -40,7 +40,7 @@ export class Scope
         this.callableName = null;
     }
 
-    addVariable(identifier, type, value = null, treeNode = null)
+    addVariable(identifier, type, value = null, treeNode = null, result = null)
     {
         let name = identifier.symbol.value;
         let lowerCaseName = name.toLowerCase();
@@ -49,7 +49,11 @@ export class Scope
         } else if (this.items.hasOwnProperty(lowerCaseName)) {
             this.addError(ErrorsCodes.identifierAlreadyUsed, `Variable '${lowerCaseName}' already declared.`, treeNode === null ? type : treeNode);
         } else {
+            if (result) {
+                this.items[result.toLowerCase()] = this.createVariable(type, value); 
+            } else {
             this.items[lowerCaseName] = this.createVariable(type, value);
+            }
         }
     }
 
@@ -266,11 +270,7 @@ export class Scope
                 item instanceof EnumVariable ||
                 item instanceof CallableVariable) {
 
-                this.items[lowerCaseName].value = variable.value; //запись значения в Scope
-                if (this.items['result']){
-                    this.items['result'].value = variable.value;
-                    this.items[this.callableName.toLowerCase()].value = variable.value;
-                }
+                this.items[lowerCaseName].value = variable.value;
             } else if (item instanceof ArrayVariable) {
                 if (destination instanceof Identifier) {
                     this.setVariableObject(destination, variable.clone());
