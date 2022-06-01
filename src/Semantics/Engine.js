@@ -222,21 +222,12 @@ export class Engine
             let currentScope = this.getCurrentScope();
             let scope = new Scope(currentScope);
             let procedureName = null;
-            let res = null;
             if (calledElem instanceof FunctionItem ||
                     calledElem instanceof Function) {
                 let procedureIdentifier = calledElem.name;
                 procedureName = procedureIdentifier.symbol.value.toLowerCase();
 
-                calledElem.sentences.forEach(function(elem) {
-                    if (elem instanceof Assignation){
-                        if (elem.destination.symbol.value == 'result') {
-                            res = 'result';
-                        }
-                    }
-                });
-
-                scope.addVariable(procedureIdentifier, calledElem.type.returnType, null, null, res);
+                scope.addVariable(procedureIdentifier, calledElem.type.returnType);
                 scope.callableName = calledElem.name.symbol.value;
             }
 
@@ -258,12 +249,9 @@ export class Engine
             let result = null;
             if (calledElem instanceof FunctionItem ||
                     calledElem instanceof Function) {
-                    if (res){
-                        result = scope.getVariable(res);
-                    } else {       
-                        result = scope.getVariable(procedureName);
-                    }
+                result = scope.getVariable(procedureName);
             }
+
             delete this.scopes[this.currentScopeId];
 
             this.currentScopeId--;
